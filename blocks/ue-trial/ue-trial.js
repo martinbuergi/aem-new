@@ -72,18 +72,94 @@ function generatePlaceholderSVG(text, index, options = {}) {
 
 // Define the steps for the trial setup process
 /**
- * "Your own site" path: authors enable it by adding a template row whose value is `own-site`.
- * The site address is asked for after Continue (not built yet), so submitting this path is
- * switched off; flip this once that step and the backend support exist.
+ * "Migrate your own site" path: authors enable it by adding a template row whose value is
+ * `own-site`. Continue opens a second step that asks for the site address; Start sends one
+ * registration request:
+ *   { email, altcha, scope, template: 'own-site', siteUrl, sampleTemplate? }
+ * With `sampleTemplate`, the response's processId is expected to track that sample site, so
+ * the usual setup progress is shown while the migration runs in the background.
+ * The backend does not accept this yet, so submitting is switched off: flip OWN_SITE_ENABLED
+ * once it does. Add `?migrate-demo` to the page URL to walk through the flow with simulated
+ * responses (nothing is sent).
  */
 const OWN_SITE_VALUE = 'own-site';
 const OWN_SITE_ENABLED = false;
+const MIGRATE_DEMO = new URLSearchParams(window.location.search).has('migrate-demo');
 
 /** How long each start path takes, shown under the "Start with" switch */
 const START_HINTS = {
   template: 'Ready in seconds',
   [OWN_SITE_VALUE]: 'Takes a while: we\'ll email you when it\'s ready',
 };
+
+/**
+ * Normalizes what a visitor typed into an absolute http(s) URL.
+ * @param {string} value - e.g. "example.com", "https://www.example.com/en"
+ * @returns {string|null} the normalized URL, or null if it isn't a usable website address
+ */
+function normalizeSiteUrl(value) {
+  const trimmed = (value || '').trim();
+  if (!trimmed) return null;
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const url = new URL(withScheme);
+    const host = url.hostname;
+    if (!['http:', 'https:'].includes(url.protocol) || !host.includes('.') || host.endsWith('.')) return null;
+    return url.href;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Second step of the migrate path, shown after Continue: asks which site to migrate.
+ * @returns {HTMLElement}
+ */
+function buildSiteStep() {
+  const step = createTag('div', { class: 'site-step', hidden: '' });
+  const back = createTag('button', { type: 'button', class: 'site-step-back' }, 'Back');
+  const title = createTag('h3', { class: 'site-step-title' }, 'Which site should we migrate?');
+  const field = createTag('div', { class: 'form-field' });
+  const input = createTag('input', {
+    type: 'text',
+    id: 'site-url',
+    name: 'siteUrl',
+    inputmode: 'url',
+    autocomplete: 'url',
+    placeholder: 'www.example.com',
+    'aria-describedby': 'site-url-help',
+  });
+  const help = createTag('p', { class: 'help-text', id: 'site-url-help' }, 'Your public website address. We\'ll read its pages and brand, nothing else.');
+  field.append(createTag('label', { for: 'site-url' }, 'Your website'), input, help);
+  const extra = createTag('p', { class: 'site-step-extra' });
+  const start = createTag('button', { type: 'submit', class: 'continue site-step-start' }, 'Start migration');
+  step.append(back, title, field, extra, start);
+  input.addEventListener('input', () => input.setCustomValidity(''));
+  return step;
+}
+
+/**
+ * Switches the form between the first step and the site-address step.
+ * @param {HTMLFormElement} form
+ * @param {boolean} onSiteStep
+ */
+function showSiteStep(form, onSiteStep) {
+  const step = form.querySelector('.site-step');
+  form.classList.toggle('on-site-step', onSiteStep);
+  step.hidden = !onSiteStep;
+  if (!onSiteStep) {
+    // a hidden invalid field would block Continue
+    step.querySelector('#site-url').setCustomValidity('');
+    form.querySelector('button.continue:not(.site-step-start)')?.focus();
+    return;
+  }
+  const sampleToo = form.querySelector('#sample-too')?.checked;
+  const sampleName = form.querySelector('.template-card.selected h4')?.textContent;
+  step.querySelector('.site-step-extra').textContent = sampleToo
+    ? `Your ${sampleName || 'sample'} site will be ready in seconds, so you can start playing while we migrate.`
+    : 'We\'ll email you when your workspace is ready.';
+  step.querySelector('#site-url').focus();
+}
 
 /**
  * Builds the "Start with" switch. Migrating your own site is the default; because that takes
@@ -166,13 +242,15 @@ function showOwnSiteComingSoon(form) {
  * instead of polling the setup steps.
  * @param {HTMLFormElement} form
  * @param {string} email
+ * @param {string} host - the site being migrated
  */
-function showOwnSiteConfirmation(form, email) {
+function showOwnSiteConfirmation(form, email, host) {
   const message = createTag('div', { class: 'success-message own-site-confirmation', role: 'status' });
   // visitor input: set as text, never as HTML
   const body = createTag('p');
-  body.textContent = `We're creating your Experience Workspace from your site. This can take a while, so there's no need to wait here: we'll email you at ${email} when it's ready.`;
+  body.textContent = `We're creating your Experience Workspace from ${host}. This can take a while, so there's no need to wait here: we'll email you at ${email} when it's ready.`;
   message.append(createTag('h3', {}, 'We\'re building your workspace'), body);
+  form.classList.remove('on-site-step');
   form.replaceChildren(message);
 }
 
@@ -356,7 +434,15 @@ function showSuccessMessage(element) {
 
 function createStatusInline(form) {
   const statusContainer = createTag('div', { class: 'status-container' });
+  const { migratingHost, migratingEmail } = form.dataset;
   form.innerHTML = '';
+  form.classList.remove('on-site-step');
+  if (migratingHost) {
+    // migrate path with a sample site: the migration keeps running in the background
+    const banner = createTag('p', { class: 'migration-banner', role: 'status' });
+    banner.textContent = `We're migrating ${migratingHost} in the background and will email you at ${migratingEmail} when it's ready. Meanwhile, your sample site:`;
+    form.append(banner);
+  }
   form.appendChild(statusContainer);
 
   const header = createTag('div', { class: 'status-header' });
@@ -578,16 +664,57 @@ function processFormData(form) {
   return data;
 }
 
+/**
+ * ?migrate-demo: plays the setup progress without calling the backend.
+ * @param {HTMLFormElement} form
+ */
+function simulateStatus(form) {
+  const status = { status: { finished: false } };
+  updateStatusInline(form, status);
+  TRIAL_STEPS.forEach((step, index) => {
+    setTimeout(() => {
+      status[step.key] = { result: 'success' };
+      updateStatusInline(form, status);
+      if (index === TRIAL_STEPS.length - 1) {
+        showSuccessMessage(form.querySelector('.status-container'));
+      }
+    }, 700 * (index + 1));
+  });
+}
+
 // Extract form submission logic into a separate function
 async function submitFormData(form) {
   const data = processFormData(form);
   const ownSite = data.start === OWN_SITE_VALUE;
+  let host = '';
   if (ownSite) {
     // the sample site is an optional extra while the migration runs
     if (form.querySelector('#sample-too')?.checked) data.sampleTemplate = data.template;
     data.template = OWN_SITE_VALUE;
+    host = new URL(data.siteUrl).hostname;
+  } else {
+    delete data.siteUrl;
   }
   delete data.start;
+
+  const onAccepted = (processId) => {
+    if (ownSite && !data.sampleTemplate) {
+      showOwnSiteConfirmation(form, data.email, host);
+      return;
+    }
+    if (ownSite) {
+      form.dataset.migratingHost = host;
+      form.dataset.migratingEmail = data.email;
+    }
+    if (MIGRATE_DEMO) simulateStatus(form);
+    else checkStatus(form, processId);
+  };
+
+  if (MIGRATE_DEMO) {
+    setTimeout(() => onAccepted(null), 600);
+    return;
+  }
+
   const submitConfig = await fetchConfig();
 
   fetch(`${submitConfig.xwalktrial.webApi}/registration`, {
@@ -600,8 +727,7 @@ async function submitFormData(form) {
     .then(async (response) => {
       if (response.ok) {
         const { processId } = await response.json();
-        if (ownSite) showOwnSiteConfirmation(form, data.email);
-        else checkStatus(form, processId);
+        onAccepted(processId);
       } else {
         const err = await response.json();
         throw new Error(err.error ? `${err.error}\nThere was an error submitting your request. Please try again.` : 'There was an error submitting your request. Please try again.');
@@ -609,9 +735,9 @@ async function submitFormData(form) {
     })
     .catch((error) => {
       showModal(error.message);
-      const submitButtonError = form.querySelector('button[type="submit"]');
+      const submitButtonError = form.querySelector(ownSite ? '.site-step-start' : 'button.continue');
       submitButtonError.disabled = false;
-      submitButtonError.textContent = 'Continue';
+      submitButtonError.textContent = ownSite ? 'Start migration' : 'Continue';
     });
 }
 
@@ -880,6 +1006,12 @@ async function buildForm(block) {
     buttonContainer,
   );
 
+  const siteStep = ownSite ? buildSiteStep() : null;
+  if (siteStep) {
+    form.append(siteStep);
+    siteStep.querySelector('.site-step-back').addEventListener('click', () => showSiteStep(form, false));
+  }
+
   // Add form submission handler
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -894,17 +1026,31 @@ async function buildForm(block) {
       return;
     }
 
-    // Your own site: the site address step after Continue isn't built yet
-    if (!OWN_SITE_ENABLED
-      && form.querySelector('input[name="start"]:checked')?.value === OWN_SITE_VALUE) {
-      showOwnSiteComingSoon(form);
-      return;
+    // Migrate your own site: Continue opens the site-address step, Start submits
+    const migrating = form.querySelector('input[name="start"]:checked')?.value === OWN_SITE_VALUE;
+    if (migrating) {
+      if (!OWN_SITE_ENABLED && !MIGRATE_DEMO) {
+        showOwnSiteComingSoon(form);
+        return;
+      }
+      if (!form.classList.contains('on-site-step')) {
+        showSiteStep(form, true);
+        return;
+      }
+      const urlInput = form.querySelector('#site-url');
+      const siteUrl = normalizeSiteUrl(urlInput.value);
+      if (!siteUrl) {
+        urlInput.setCustomValidity('Enter your website address, like www.example.com');
+        urlInput.reportValidity();
+        return;
+      }
+      urlInput.value = siteUrl;
     }
 
     // Disable submit button to prevent multiple submissions
-    const submitButtonSubmit = form.querySelector('button[type="submit"]');
+    const submitButtonSubmit = form.querySelector(migrating ? '.site-step-start' : 'button.continue');
     submitButtonSubmit.disabled = true;
-    submitButtonSubmit.textContent = 'Submitting...';
+    submitButtonSubmit.textContent = migrating ? 'Starting...' : 'Submitting...';
 
     // Submit form data
     submitFormData(form);
