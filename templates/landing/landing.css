@@ -717,3 +717,35 @@ body.landing-template {
     transform: none;
   }
 }
+
+/* migrate path, step 2 */
+.landing-template main .ue-trial .site-step-back {
+  color: var(--landing-blue-deep);
+}
+
+.landing-template main .ue-trial .site-step-back:focus-visible {
+  outline: none;
+  border-radius: 4px;
+  box-shadow: var(--landing-ring);
+}
+
+.landing-template main .ue-trial .site-step-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--landing-ink);
+}
+
+.landing-template main .ue-trial .site-step .help-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--landing-ink-quiet);
+}
+
+.landing-template main .ue-trial .site-step-extra {
+  color: var(--landing-ink-soft);
+}
+
+.landing-template main .ue-trial .migration-banner {
+  background: var(--landing-blue-wash);
+  color: var(--landing-ink);
+}

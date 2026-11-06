@@ -1137,3 +1137,57 @@
     font-size: 15px;
   }
 }
+
+/* migrate path, step 2: which site to migrate */
+.ue-trial form.on-site-step > :not(.site-step),
+.ue-trial .site-step[hidden] {
+  display: none;
+}
+
+.ue-trial .site-step {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  order: 4;
+}
+
+.ue-trial .site-step-back {
+  align-self: flex-start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1473e6;
+  cursor: pointer;
+}
+
+.ue-trial .site-step-back::before {
+  content: "←";
+  margin-right: 6px;
+}
+
+.ue-trial .site-step-title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.ue-trial .site-step-extra {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #4b4b4b;
+}
+
+.ue-trial .migration-banner {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #eef5fe;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #2c2c2c;
+}
