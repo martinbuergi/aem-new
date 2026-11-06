@@ -379,10 +379,12 @@
   justify-content: center;
   min-height: 36px;
   margin: 0;
-  padding: 0 12px;
+  padding: 6px 12px;
   border-radius: 999px;
   font-size: 14px;
   font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
   color: #4b4b4b;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -438,6 +440,99 @@
   font-size: 13px;
   line-height: 1.4;
   color: #6e6e6e;
+}
+
+/* "while you wait" switch: adds a sample site to a migration */
+.ue-trial .while-you-wait {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 0 0;
+  padding: 8px 12px 8px 8px;
+  border: 1px solid #e1e1e1;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.ue-trial .while-you-wait-thumb {
+  flex: none;
+  width: 56px;
+  height: 36px;
+  border-radius: 4px;
+  object-fit: cover;
+  object-position: top left;
+}
+
+.ue-trial .while-you-wait-thumb[hidden] {
+  display: none;
+}
+
+.ue-trial .while-you-wait:not(:has(.switch-input:checked)) .while-you-wait-thumb {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+.ue-trial .while-you-wait-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.ue-trial .while-you-wait-text strong {
+  color: #2c2c2c;
+}
+
+.ue-trial .while-you-wait-sub {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2d7d46;
+}
+
+.ue-trial .switch-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.ue-trial .switch-track {
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: #b3b3b3;
+  transition: background-color 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.ue-trial .switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.ue-trial .switch-input:checked ~ .switch-track {
+  background: #1473e6;
+}
+
+.ue-trial .switch-input:checked ~ .switch-track::after {
+  transform: translateX(16px);
+}
+
+.ue-trial .switch-input:focus-visible ~ .switch-track {
+  outline: 2px solid #1473e6;
+  outline-offset: 2px;
 }
 
 .ue-trial .own-site-note {

@@ -345,6 +345,33 @@ body.landing-template {
   color: var(--landing-ink-quiet);
 }
 
+.landing-template main .ue-trial .while-you-wait {
+  border-color: oklch(90% 0.01 260deg);
+  background: var(--landing-paper);
+}
+
+.landing-template main .ue-trial .while-you-wait:has(.switch-input:checked) {
+  border-color: oklch(85% 0.05 256deg);
+  background: var(--landing-blue-wash);
+}
+
+.landing-template main .ue-trial .while-you-wait-text strong {
+  color: var(--landing-ink);
+}
+
+.landing-template main .ue-trial .while-you-wait-sub {
+  color: oklch(48% 0.12 150deg);
+}
+
+.landing-template main .ue-trial .switch-input:checked ~ .switch-track {
+  background: var(--landing-blue);
+}
+
+.landing-template main .ue-trial .switch-input:focus-visible ~ .switch-track {
+  outline: none;
+  box-shadow: var(--landing-ring);
+}
+
 .landing-template main .ue-trial .own-site-note {
   order: 3;
   padding: 10px 12px;

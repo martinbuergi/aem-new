@@ -86,7 +86,10 @@ const START_HINTS = {
 };
 
 /**
- * Builds the "Start with" switch (sample site or your own site) and the own-site panel.
+ * Builds the "Start with" switch. Migrating your own site is the default; because that takes
+ * a while, a compact "while you wait" switch (on by default) adds the selected sample site,
+ * which is ready in seconds. Visitors who only want to play pick "Explore a sample site",
+ * where the full template cards are shown.
  * @param {Object} ownSite - the authored own-site row ({ text, description })
  * @param {HTMLElement} templateGrid - the sample-site template cards
  * @returns {{ switcher: HTMLElement, panel: HTMLElement, hint: HTMLElement }}
@@ -94,8 +97,8 @@ const START_HINTS = {
 function buildOwnSitePath(ownSite, templateGrid) {
   const switcher = createTag('div', { class: 'start-switch', role: 'radiogroup', 'aria-label': 'Start with' });
   const options = [
-    { value: 'template', label: 'Sample site' },
     { value: OWN_SITE_VALUE, label: ownSite.text },
+    { value: 'template', label: 'Explore a sample site' },
   ];
   options.forEach(({ value, label }, index) => {
     const id = `start-${value}`;
@@ -108,23 +111,42 @@ function buildOwnSitePath(ownSite, templateGrid) {
     switcher.append(input, optionLabel);
   });
 
-  const panel = createTag('div', { class: 'own-site-panel', hidden: '' });
+  const panel = createTag('div', { class: 'own-site-panel' });
   const help = createTag('p', { class: 'help-text' });
   help.textContent = ownSite.description;
-  panel.append(help);
 
-  const hint = createTag('p', { class: 'start-hint', 'aria-live': 'polite' });
-  hint.textContent = START_HINTS.template;
+  const waitRow = createTag('label', { class: 'while-you-wait', for: 'sample-too' });
+  const waitToggle = createTag('input', {
+    type: 'checkbox', id: 'sample-too', class: 'switch-input', role: 'switch', checked: '',
+  });
+  const waitThumb = createTag('img', { class: 'while-you-wait-thumb', alt: '' });
+  const waitText = createTag('span', { class: 'while-you-wait-text' });
+  const waitSub = createTag('span', { class: 'while-you-wait-sub' });
+  waitText.append(createTag('strong', {}, 'Play with a sample site while you wait'), waitSub);
+  waitRow.append(waitThumb, waitText, waitToggle, createTag('span', { class: 'switch-track', 'aria-hidden': 'true' }));
+  panel.append(help, waitRow);
 
-  switcher.addEventListener('change', () => {
+  const hint = createTag('p', { class: 'start-hint slow', 'aria-live': 'polite' });
+  hint.textContent = START_HINTS[OWN_SITE_VALUE];
+
+  const update = () => {
     const start = switcher.querySelector('input:checked')?.value;
     const ownSiteSelected = start === OWN_SITE_VALUE;
     hint.textContent = START_HINTS[start] || '';
     hint.classList.toggle('slow', ownSiteSelected);
-    templateGrid.hidden = ownSiteSelected;
     panel.hidden = !ownSiteSelected;
+    templateGrid.hidden = ownSiteSelected;
+    // the switch row stands in for the selected template card
+    const card = templateGrid.querySelector('.template-card.selected') || templateGrid.querySelector('.template-card');
+    const img = card?.querySelector('img');
+    waitThumb.hidden = !img;
+    if (img) waitThumb.src = img.currentSrc || img.src;
+    waitSub.textContent = `${card?.querySelector('h4')?.textContent || 'Sample site'}, ready in seconds`;
     switcher.closest('form')?.querySelector('.own-site-note')?.remove();
-  });
+  };
+  switcher.addEventListener('change', update);
+  waitToggle.addEventListener('change', update);
+  update();
 
   return { switcher, panel, hint };
 }
@@ -135,7 +157,7 @@ function buildOwnSitePath(ownSite, templateGrid) {
  */
 function showOwnSiteComingSoon(form) {
   if (form.querySelector('.own-site-note')) return;
-  const note = createTag('p', { class: 'own-site-note', role: 'status' }, 'Starting from your own site is coming soon. Choose "Sample site" to get your workspace today.');
+  const note = createTag('p', { class: 'own-site-note', role: 'status' }, 'Migrating your own site is coming soon. Choose "Explore a sample site" to get your workspace today.');
   form.querySelector('.button-container')?.before(note);
 }
 
@@ -560,7 +582,11 @@ function processFormData(form) {
 async function submitFormData(form) {
   const data = processFormData(form);
   const ownSite = data.start === OWN_SITE_VALUE;
-  if (ownSite) data.template = OWN_SITE_VALUE;
+  if (ownSite) {
+    // the sample site is an optional extra while the migration runs
+    if (form.querySelector('#sample-too')?.checked) data.sampleTemplate = data.template;
+    data.template = OWN_SITE_VALUE;
+  }
   delete data.start;
   const submitConfig = await fetchConfig();
 
@@ -725,7 +751,7 @@ async function buildForm(block) {
     templateLabel.id = 'start-with-label';
     switcher.setAttribute('aria-labelledby', 'start-with-label');
     switcher.removeAttribute('aria-label');
-    templateField.append(templateLabel, switcher, hint, templateGrid, panel);
+    templateField.append(templateLabel, switcher, hint, panel, templateGrid);
   } else {
     templateField.append(templateLabel, templateGrid);
   }
