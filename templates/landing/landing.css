@@ -734,7 +734,7 @@ body.landing-template {
       "eyebrow eyebrow" auto
       "title title" auto
       "signup lead" auto
-      "intro intro" auto
+      "intro explore" auto
       "itinerary itinerary" 1fr
       / minmax(0, 6fr) minmax(0, 6fr);
     min-height: 100vh;
@@ -751,25 +751,23 @@ body.landing-template {
     padding-bottom: 48px;
   }
 
-  /* below the form, the intro and agent list run the full width */
+  /* below the form: the intro and the list's lead-in side by side, on the columns above; the list runs full width */
   .landing-template main .ue-trial-container > .default-content-wrapper > h1 + p {
     margin: 0;
     padding-top: 40px;
-    max-width: calc(68ch + 2 * var(--landing-gutter));
+    padding-right: 0;
+    max-width: none;
     color: var(--landing-on-stage-soft);
   }
 
   .landing-template main .ue-trial .trial-info > div > div:nth-child(2) {
-    padding-inline: var(--landing-gutter);
+    display: contents;
   }
 
   .landing-template main .ue-trial .trial-info > div > div:nth-child(2) ul {
+    grid-area: itinerary;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .landing-template main .ue-trial .trial-info > div > div:nth-child(2) {
-    padding-top: 24px;
-    padding-bottom: 64px;
+    padding: 32px var(--landing-gutter) 64px;
   }
 
   /* the title runs across the page on one line where it fits */
@@ -802,8 +800,10 @@ body.landing-template {
   }
 
   .landing-template main .ue-trial .trial-info > div > div:nth-child(2) > p:has(+ ul) {
-    max-width: 68ch;
-    margin-bottom: 20px;
+    grid-area: explore;
+    margin: 0;
+    padding: 40px var(--landing-gutter) 0 clamp(32px, 4vw, 72px);
+    line-height: 1.5;
   }
 
   .landing-template main .ue-trial .form-section {
