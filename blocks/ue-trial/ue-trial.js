@@ -73,8 +73,8 @@ function generatePlaceholderSVG(text, index, options = {}) {
 // Define the steps for the trial setup process
 /**
  * "Migrate your own site" path: authors enable it by adding a template row whose value is
- * `own-site`. Continue opens a second step that asks for the site address; Start sends one
- * registration request:
+ * `own-site`. Selecting it shows a website field in the form; Continue sends one registration
+ * request:
  *   { email, altcha, scope, template: 'own-site', siteUrl, sampleTemplate? }
  * With `sampleTemplate`, the response's processId is expected to track that sample site, so
  * the usual setup progress is shown while the migration runs in the background.
@@ -90,7 +90,7 @@ const OWN_SITE_ACCEPTED = OWN_SITE_ENABLED || MIGRATE_DEMO;
 /** How long each start path takes, shown under the "Start with" switch */
 const START_HINTS = {
   template: 'Ready in seconds',
-  [OWN_SITE_VALUE]: 'Takes a while: we\'ll email you when it\'s ready',
+  [OWN_SITE_VALUE]: 'Takes a while: we\'ll email you',
 };
 
 /**
@@ -113,14 +113,11 @@ function normalizeSiteUrl(value) {
 }
 
 /**
- * Second step of the migrate path, shown after Continue: asks which site to migrate.
- * @returns {HTMLElement}
+ * The website field of the migrate path.
+ * @returns {{ field: HTMLElement, input: HTMLInputElement }}
  */
-function buildSiteStep() {
-  const step = createTag('div', { class: 'site-step', hidden: '' });
-  const back = createTag('button', { type: 'button', class: 'site-step-back' }, 'Back');
-  const title = createTag('h3', { class: 'site-step-title' }, 'Which site should we migrate?');
-  const field = createTag('div', { class: 'form-field' });
+function buildSiteField() {
+  const field = createTag('div', { class: 'form-field site-field' });
   const input = createTag('input', {
     type: 'text',
     id: 'site-url',
@@ -128,42 +125,16 @@ function buildSiteStep() {
     inputmode: 'url',
     autocomplete: 'url',
     placeholder: 'www.example.com',
-    'aria-describedby': 'site-url-help',
+    'aria-describedby': 'site-url-hint',
   });
-  const help = createTag('p', { class: 'help-text', id: 'site-url-help' }, 'Your public website address. We\'ll read its pages and brand, nothing else.');
-  field.append(createTag('label', { for: 'site-url' }, 'Your website'), input, help);
-  const extra = createTag('p', { class: 'site-step-extra' });
-  const start = createTag('button', { type: 'submit', class: 'continue site-step-start' }, 'Start migration');
-  step.append(back, title, field, extra, start);
-  input.addEventListener('input', () => input.setCustomValidity(''));
-  return step;
-}
-
-/**
- * Switches the form between the first step and the site-address step.
- * @param {HTMLFormElement} form
- * @param {boolean} onSiteStep
- */
-function showSiteStep(form, onSiteStep) {
-  const step = form.querySelector('.site-step');
-  form.classList.toggle('on-site-step', onSiteStep);
-  step.hidden = !onSiteStep;
-  if (!onSiteStep) {
-    // a hidden invalid field would block Continue
-    step.querySelector('#site-url').setCustomValidity('');
-    step.querySelector('.own-site-note')?.remove();
-    form.querySelector('button.continue:not(.site-step-start)')?.focus();
-    return;
-  }
-  const extra = step.querySelector('.site-step-extra');
-  // nothing to promise until submissions are accepted
-  extra.hidden = !OWN_SITE_ACCEPTED;
-  const sampleToo = form.querySelector('#sample-too')?.checked;
-  const sampleName = form.querySelector('.template-card.selected h4')?.textContent;
-  extra.textContent = sampleToo
-    ? `Your ${sampleName || 'sample'} site will be ready in seconds, so you can start playing while we migrate.`
-    : 'We\'ll email you when your workspace is ready.';
-  step.querySelector('#site-url').focus();
+  // the "how long" hint shares the label's row, which keeps Continue in the first screen
+  const hint = createTag('p', { class: 'start-hint slow', id: 'site-url-hint' }, START_HINTS[OWN_SITE_VALUE]);
+  field.append(createTag('label', { for: 'site-url' }, 'Your website'), hint, input);
+  input.addEventListener('input', () => {
+    input.setCustomValidity('');
+    input.closest('form')?.querySelector('.own-site-note')?.remove();
+  });
+  return { field, input };
 }
 
 /**
@@ -171,7 +142,7 @@ function showSiteStep(form, onSiteStep) {
  * a while, a compact "while you wait" switch (on by default) adds the selected sample site,
  * which is ready in seconds. Visitors who only want to play pick "Explore a sample site",
  * where the full template cards are shown.
- * @param {Object} ownSite - the authored own-site row ({ text, description })
+ * @param {Object} ownSite - the authored own-site row ({ text })
  * @param {HTMLElement} templateGrid - the sample-site template cards
  * @returns {{ switcher: HTMLElement, panel: HTMLElement, hint: HTMLElement }}
  */
@@ -193,8 +164,7 @@ function buildOwnSitePath(ownSite, templateGrid) {
   });
 
   const panel = createTag('div', { class: 'own-site-panel' });
-  const help = createTag('p', { class: 'help-text' });
-  help.textContent = ownSite.description;
+  const { field: siteField, input: siteInput } = buildSiteField();
 
   const waitRow = createTag('label', { class: 'while-you-wait', for: 'sample-too' });
   const waitToggle = createTag('input', {
@@ -205,18 +175,20 @@ function buildOwnSitePath(ownSite, templateGrid) {
   const waitSub = createTag('span', { class: 'while-you-wait-sub' });
   waitText.append(createTag('strong', {}, 'Play with a sample site while you wait'), waitSub);
   waitRow.append(waitThumb, waitText, waitToggle, createTag('span', { class: 'switch-track', 'aria-hidden': 'true' }));
-  panel.append(help, waitRow);
+  panel.append(siteField, waitRow);
 
-  const hint = createTag('p', { class: 'start-hint slow', 'aria-live': 'polite' });
-  hint.textContent = START_HINTS[OWN_SITE_VALUE];
+  const hint = createTag('p', { class: 'start-hint', 'aria-live': 'polite' });
 
   const update = () => {
     const start = switcher.querySelector('input:checked')?.value;
     const ownSiteSelected = start === OWN_SITE_VALUE;
     hint.textContent = START_HINTS[start] || '';
-    hint.classList.toggle('slow', ownSiteSelected);
+    hint.hidden = ownSiteSelected;
     panel.hidden = !ownSiteSelected;
     templateGrid.hidden = ownSiteSelected;
+    // a hidden field must not block Continue on the sample path
+    siteInput.required = ownSiteSelected;
+    siteInput.setCustomValidity('');
     // the switch row stands in for the selected template card
     const card = templateGrid.querySelector('.template-card.selected') || templateGrid.querySelector('.template-card');
     const img = card?.querySelector('img');
@@ -233,13 +205,13 @@ function buildOwnSitePath(ownSite, templateGrid) {
 }
 
 /**
- * Own-site submissions are not supported by the backend yet: say so next to Start migration.
+ * Own-site submissions are not supported by the backend yet: say so next to Continue.
  * @param {HTMLFormElement} form
  */
 function showOwnSiteComingSoon(form) {
   if (form.querySelector('.own-site-note')) return;
-  const note = createTag('p', { class: 'own-site-note', role: 'status' }, 'Migrating your own site is coming soon, so nothing has been sent. Go back and choose "Explore a sample site" to get your workspace today.');
-  form.querySelector('.site-step-start')?.before(note);
+  const note = createTag('p', { class: 'own-site-note', role: 'status' }, 'Migrating your own site is coming soon, so nothing has been sent. Choose "Explore a sample site" to get your workspace today.');
+  form.querySelector('.button-container')?.before(note);
 }
 
 /**
@@ -255,7 +227,6 @@ function showOwnSiteConfirmation(form, email, host) {
   const body = createTag('p');
   body.textContent = `We're creating your Experience Workspace from ${host}. This can take a while, so there's no need to wait here: we'll email you at ${email} when it's ready.`;
   message.append(createTag('h3', {}, 'We\'re building your workspace'), body);
-  form.classList.remove('on-site-step');
   form.replaceChildren(message);
 }
 
@@ -441,7 +412,6 @@ function createStatusInline(form) {
   const statusContainer = createTag('div', { class: 'status-container' });
   const { migratingHost, migratingEmail } = form.dataset;
   form.innerHTML = '';
-  form.classList.remove('on-site-step');
   if (migratingHost) {
     // migrate path with a sample site: the migration keeps running in the background
     const banner = createTag('p', { class: 'migration-banner', role: 'status' });
@@ -740,9 +710,9 @@ async function submitFormData(form) {
     })
     .catch((error) => {
       showModal(error.message);
-      const submitButtonError = form.querySelector(ownSite ? '.site-step-start' : 'button.continue');
+      const submitButtonError = form.querySelector('button.continue');
       submitButtonError.disabled = false;
-      submitButtonError.textContent = ownSite ? 'Start migration' : 'Continue';
+      submitButtonError.textContent = 'Continue';
     });
 }
 
@@ -1011,12 +981,6 @@ async function buildForm(block) {
     buttonContainer,
   );
 
-  const siteStep = ownSite ? buildSiteStep() : null;
-  if (siteStep) {
-    form.append(siteStep);
-    siteStep.querySelector('.site-step-back').addEventListener('click', () => showSiteStep(form, false));
-  }
-
   // Add form submission handler
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1031,13 +995,9 @@ async function buildForm(block) {
       return;
     }
 
-    // Migrate your own site: Continue opens the site-address step, Start submits
+    // Migrate your own site: the website field has to hold a usable address
     const migrating = form.querySelector('input[name="start"]:checked')?.value === OWN_SITE_VALUE;
     if (migrating) {
-      if (!form.classList.contains('on-site-step')) {
-        showSiteStep(form, true);
-        return;
-      }
       const urlInput = form.querySelector('#site-url');
       const siteUrl = normalizeSiteUrl(urlInput.value);
       if (!siteUrl) {
@@ -1053,9 +1013,9 @@ async function buildForm(block) {
     }
 
     // Disable submit button to prevent multiple submissions
-    const submitButtonSubmit = form.querySelector(migrating ? '.site-step-start' : 'button.continue');
+    const submitButtonSubmit = form.querySelector('button.continue');
     submitButtonSubmit.disabled = true;
-    submitButtonSubmit.textContent = migrating ? 'Starting...' : 'Submitting...';
+    submitButtonSubmit.textContent = 'Submitting...';
 
     // Submit form data
     submitFormData(form);
@@ -1121,7 +1081,9 @@ function decorateAvailability(block, formSection) {
   };
   products(live).forEach((name) => addItem(name, 'Available now', true));
   products(soon).forEach((name) => addItem(name, 'Coming soon', false));
-  paragraph.replaceWith(list);
+  // the last thing on the page, below the content that follows the form
+  paragraph.closest('.section').append(list);
+  paragraph.remove();
 }
 
 export default async function decorate(block) {

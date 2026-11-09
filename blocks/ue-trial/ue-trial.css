@@ -424,8 +424,25 @@
 }
 
 .ue-trial .template-grid[hidden],
+.ue-trial .start-hint[hidden],
 .ue-trial .own-site-panel[hidden] {
   display: none;
+}
+
+.ue-trial .site-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+}
+
+.ue-trial .site-field .start-hint {
+  justify-content: flex-end;
+  margin: 0;
+}
+
+/* stylelint-disable-next-line no-descending-specificity -- different elements than the earlier rule */
+.ue-trial .site-field input {
+  grid-column: 1 / -1;
 }
 
 .ue-trial .own-site-panel {
@@ -433,13 +450,6 @@
   flex-direction: column;
   gap: 6px;
   margin-top: 10px;
-}
-
-.ue-trial .own-site-panel .help-text {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
-  color: #6e6e6e;
 }
 
 /* "while you wait" switch: adds a sample site to a migration */
@@ -1136,50 +1146,6 @@
   .modal-body p {
     font-size: 15px;
   }
-}
-
-/* migrate path, step 2: which site to migrate */
-.ue-trial form.on-site-step > :not(.site-step),
-.ue-trial .site-step[hidden] {
-  display: none;
-}
-
-.ue-trial .site-step {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  order: 4;
-}
-
-.ue-trial .site-step-back {
-  align-self: flex-start;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  color: #1473e6;
-  cursor: pointer;
-}
-
-.ue-trial .site-step-back::before {
-  content: "←";
-  margin-right: 6px;
-}
-
-.ue-trial .site-step-title {
-  margin: 0;
-  font-size: 22px;
-  line-height: 1.2;
-}
-
-.ue-trial .site-step-extra {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #4b4b4b;
 }
 
 .ue-trial .migration-banner {
