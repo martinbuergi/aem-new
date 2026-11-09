@@ -85,6 +85,7 @@ function generatePlaceholderSVG(text, index, options = {}) {
 const OWN_SITE_VALUE = 'own-site';
 const OWN_SITE_ENABLED = false;
 const MIGRATE_DEMO = new URLSearchParams(window.location.search).has('migrate-demo');
+const OWN_SITE_ACCEPTED = OWN_SITE_ENABLED || MIGRATE_DEMO;
 
 /** How long each start path takes, shown under the "Start with" switch */
 const START_HINTS = {
@@ -150,12 +151,16 @@ function showSiteStep(form, onSiteStep) {
   if (!onSiteStep) {
     // a hidden invalid field would block Continue
     step.querySelector('#site-url').setCustomValidity('');
+    step.querySelector('.own-site-note')?.remove();
     form.querySelector('button.continue:not(.site-step-start)')?.focus();
     return;
   }
+  const extra = step.querySelector('.site-step-extra');
+  // nothing to promise until submissions are accepted
+  extra.hidden = !OWN_SITE_ACCEPTED;
   const sampleToo = form.querySelector('#sample-too')?.checked;
   const sampleName = form.querySelector('.template-card.selected h4')?.textContent;
-  step.querySelector('.site-step-extra').textContent = sampleToo
+  extra.textContent = sampleToo
     ? `Your ${sampleName || 'sample'} site will be ready in seconds, so you can start playing while we migrate.`
     : 'We\'ll email you when your workspace is ready.';
   step.querySelector('#site-url').focus();
@@ -228,13 +233,13 @@ function buildOwnSitePath(ownSite, templateGrid) {
 }
 
 /**
- * Own-site submissions are not supported by the backend yet: say so next to Continue.
+ * Own-site submissions are not supported by the backend yet: say so next to Start migration.
  * @param {HTMLFormElement} form
  */
 function showOwnSiteComingSoon(form) {
   if (form.querySelector('.own-site-note')) return;
-  const note = createTag('p', { class: 'own-site-note', role: 'status' }, 'Migrating your own site is coming soon. Choose "Explore a sample site" to get your workspace today.');
-  form.querySelector('.button-container')?.before(note);
+  const note = createTag('p', { class: 'own-site-note', role: 'status' }, 'Migrating your own site is coming soon, so nothing has been sent. Go back and choose "Explore a sample site" to get your workspace today.');
+  form.querySelector('.site-step-start')?.before(note);
 }
 
 /**
@@ -1029,10 +1034,6 @@ async function buildForm(block) {
     // Migrate your own site: Continue opens the site-address step, Start submits
     const migrating = form.querySelector('input[name="start"]:checked')?.value === OWN_SITE_VALUE;
     if (migrating) {
-      if (!OWN_SITE_ENABLED && !MIGRATE_DEMO) {
-        showOwnSiteComingSoon(form);
-        return;
-      }
       if (!form.classList.contains('on-site-step')) {
         showSiteStep(form, true);
         return;
@@ -1045,6 +1046,10 @@ async function buildForm(block) {
         return;
       }
       urlInput.value = siteUrl;
+      if (!OWN_SITE_ACCEPTED) {
+        showOwnSiteComingSoon(form);
+        return;
+      }
     }
 
     // Disable submit button to prevent multiple submissions
@@ -1057,6 +1062,28 @@ async function buildForm(block) {
   });
 
   return form;
+}
+
+/**
+ * Landing template: moves the first authored section after the block (its h2 and the
+ * paragraphs and h3s that follow) into a wrapper of its own, so it can sit beside the form.
+ * Authors keep writing it below the block; a section without h3s stays where it is.
+ * @param {HTMLElement} block
+ */
+function decorateLead(block) {
+  const after = block.closest('.section')?.querySelector('.ue-trial-wrapper ~ .default-content-wrapper');
+  const heading = after?.querySelector(':scope > h2');
+  if (!heading) return;
+  const parts = [heading];
+  let next = heading.nextElementSibling;
+  while (next && ['P', 'H3'].includes(next.tagName)) {
+    parts.push(next);
+    next = next.nextElementSibling;
+  }
+  if (!parts.some((part) => part.tagName === 'H3')) return;
+  const lead = createTag('div', { class: 'landing-lead' });
+  lead.append(...parts);
+  after.before(lead);
 }
 
 /**
@@ -1138,6 +1165,7 @@ export default async function decorate(block) {
     // a compact captcha: the "Protected by ALTCHA" footer adds a second row to the box
     formSection.querySelector('altcha-widget')?.setAttribute('hidefooter', '');
     decorateAvailability(block, formSection);
+    decorateLead(block);
   }
 
   // Clear the block and add the new layout

@@ -46,6 +46,7 @@ body.landing-template {
     "eyebrow"
     "title"
     "signup"
+    "lead"
     "intro"
     "itinerary";
   max-width: none;
@@ -584,10 +585,7 @@ body.landing-template {
 }
 
 .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:first-child {
-  margin: 0 0 16px;
-  font-size: clamp(32px, 3.2vw, 46px);
-  line-height: 1.08;
-  letter-spacing: -0.025em;
+  margin-top: 0;
 }
 
 .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > p {
@@ -599,16 +597,46 @@ body.landing-template {
   text-wrap: pretty;
 }
 
-.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:first-child + p {
-  max-width: 58ch;
+/* ---------- lead section (the first authored section after the block, moved here by ue-trial.js) ---------- */
+.landing-template main .ue-trial-container > .landing-lead {
+  grid-area: lead;
+  max-width: none;
+  margin: 0;
+  padding: 16px var(--landing-gutter) 0;
+}
+
+.landing-template main .landing-lead > h2 {
+  margin: 0 0 16px;
+  font-size: clamp(30px, 2.9vw, 42px);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  color: var(--landing-on-stage);
+  text-wrap: balance;
+}
+
+.landing-template main .landing-lead > p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--landing-on-stage-soft);
+  text-wrap: pretty;
+}
+
+.landing-template main .landing-lead > h2 + p {
+  max-width: 54ch;
+  margin-bottom: 24px;
   font-size: 20px;
 }
 
-.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h3 {
-  margin: 32px 0 8px;
-  padding-top: 20px;
+.landing-template main .landing-lead > h3 + p {
+  margin-bottom: 20px;
+}
+
+.landing-template main .landing-lead > h3 {
+  margin: 0 0 6px;
+  padding-top: 18px;
   border-top: 1px solid var(--landing-rule);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.01em;
@@ -705,8 +733,9 @@ body.landing-template {
       "lockup lockup" auto
       "eyebrow eyebrow" auto
       "title title" auto
-      "signup intro" auto
-      "signup itinerary" 1fr
+      "signup lead" auto
+      "intro intro" auto
+      "itinerary itinerary" 1fr
       / minmax(0, 6fr) minmax(0, 6fr);
     min-height: 100vh;
 
@@ -715,22 +744,31 @@ body.landing-template {
   }
 
   /* the right column's text starts a comfortable distance from the panel */
-  .landing-template main .ue-trial-container > .default-content-wrapper > h1 + p,
-  .landing-template main .ue-trial .trial-info > div > div:nth-child(2) {
+  .landing-template main .ue-trial-container > .landing-lead {
+    padding-top: 0;
     padding-left: clamp(32px, 4vw, 72px);
     padding-right: var(--landing-gutter);
+    padding-bottom: 48px;
   }
 
+  /* below the form, the intro and agent list run the full width */
   .landing-template main .ue-trial-container > .default-content-wrapper > h1 + p {
     margin: 0;
-    padding-top: 4px;
-    padding-bottom: 8px;
-    max-width: calc(54ch + clamp(32px, 4vw, 72px) + var(--landing-gutter));
+    padding-top: 40px;
+    max-width: calc(68ch + 2 * var(--landing-gutter));
     color: var(--landing-on-stage-soft);
   }
 
   .landing-template main .ue-trial .trial-info > div > div:nth-child(2) {
-    padding-top: 48px;
+    padding-inline: var(--landing-gutter);
+  }
+
+  .landing-template main .ue-trial .trial-info > div > div:nth-child(2) ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-template main .ue-trial .trial-info > div > div:nth-child(2) {
+    padding-top: 24px;
     padding-bottom: 64px;
   }
 
@@ -764,7 +802,7 @@ body.landing-template {
   }
 
   .landing-template main .ue-trial .trial-info > div > div:nth-child(2) > p:has(+ ul) {
-    max-width: 46ch;
+    max-width: 68ch;
     margin-bottom: 20px;
   }
 
@@ -784,7 +822,7 @@ body.landing-template {
    */
   .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 40px;
     padding-top: 24px;
   }
@@ -793,35 +831,16 @@ body.landing-template {
     grid-column: 1 / -1;
   }
 
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:first-child {
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2 {
+    grid-column: auto;
     grid-row: 1;
-  }
-
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:first-child + p {
-    grid-row: 2;
-  }
-
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h3 {
-    grid-column: span 2;
-    grid-row: 3;
-    margin-top: 40px;
-  }
-
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h3 + p {
-    grid-column: span 2;
-    grid-row: 4;
-  }
-
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h3 ~ h2 {
-    grid-column: span 3;
-    grid-row: 5;
     max-width: 18em;
-    margin-top: 72px;
+    margin-top: 0;
   }
 
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h3 ~ h2 + p {
-    grid-column: span 3;
-    grid-row: 6;
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2 + p {
+    grid-column: auto;
+    grid-row: 2;
   }
 
   .landing-template main .ue-trial-container .availability {
@@ -842,7 +861,31 @@ body.landing-template {
   }
 
   .landing-template main .ue-trial .trial-info > div > div:nth-child(2) ul {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* the audiences read as rows beside the form: name on the left, text on the right */
+  .landing-template main .ue-trial-container > .landing-lead {
+    display: grid;
+    grid-template-columns: 208px minmax(0, 1fr);
+    align-content: start;
+  }
+
+  .landing-template main .landing-lead > h2,
+  .landing-template main .landing-lead > h2 + p {
+    grid-column: 1 / -1;
+  }
+
+  .landing-template main .landing-lead > h3 {
+    margin: 0;
+    padding-block: 16px;
+  }
+
+  .landing-template main .landing-lead > h3 + p {
+    margin-bottom: 0;
+    padding-block: 18px 16px;
+    border-top: 1px solid var(--landing-rule);
+    font-size: 16px;
   }
 }
 
@@ -931,6 +974,10 @@ body.landing-template {
 
 .landing-template main .ue-trial .site-step-extra {
   color: var(--landing-ink-soft);
+}
+
+.landing-template main .ue-trial .site-step .own-site-note {
+  order: 0;
 }
 
 .landing-template main .ue-trial .migration-banner {
