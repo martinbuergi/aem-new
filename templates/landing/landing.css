@@ -29,6 +29,9 @@ body.landing-template {
   --landing-on-stage-accent: oklch(78% 0.11 25deg);
   --landing-rule: oklch(98% 0.003 20deg / 16%);
 
+  /* the lighter band behind the two paths and the availability strip */
+  --landing-band: oklch(98% 0.003 20deg / 6%);
+
   background: var(--landing-stage);
   color: var(--landing-on-stage);
 }
@@ -572,9 +575,7 @@ body.landing-template {
   margin: 32px 0 0;
   padding: 0 var(--landing-gutter);
 
-  /* a lighter band that reaches the screen edges even where the content stops at 1440px */
-  --landing-band: oklch(98% 0.003 20deg / 6%);
-
+  /* reaches the screen edges even where the content stops at 1440px */
   background: var(--landing-band);
   box-shadow: 0 0 0 100vmax var(--landing-band);
   clip-path: inset(0 -100vmax);
@@ -703,10 +704,15 @@ body.landing-template {
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  margin: 40px 0 72px;
-  padding-block: 0;
+  margin: 40px 0 0;
+  padding-block: 12px 32px;
   padding-inline: var(--landing-gutter);
   list-style: none;
+
+  /* same band as the two paths */
+  background: var(--landing-band);
+  box-shadow: 0 0 0 100vmax var(--landing-band);
+  clip-path: inset(0 -100vmax);
 }
 
 .landing-template main .ue-trial-container .availability-item {
@@ -717,6 +723,10 @@ body.landing-template {
   margin: 0;
   padding: 20px 0;
   border-top: 1px solid var(--landing-rule);
+}
+
+.landing-template main .ue-trial-container .availability-item:first-child {
+  border-top: 0;
 }
 
 .landing-template main .ue-trial-container .availability-status {
@@ -898,6 +908,12 @@ body.landing-template {
     grid-auto-flow: column;
     grid-auto-columns: minmax(0, 1fr);
     gap: 40px;
+    padding-block: 40px 64px;
+  }
+
+  .landing-template main .ue-trial-container .availability-item {
+    padding-block: 0;
+    border-top: 0;
   }
 }
 
