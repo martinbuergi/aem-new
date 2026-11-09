@@ -79,7 +79,7 @@ body.landing-template {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 32px var(--landing-gutter) 0;
+  padding: 20px var(--landing-gutter) 0;
 }
 
 .landing-template main .ue-trial .trial-info > div > div:first-child picture {
@@ -111,7 +111,7 @@ body.landing-template {
 
 .landing-template main .ue-trial-container > .default-content-wrapper > p:first-child:has(+ h1) {
   grid-area: eyebrow;
-  margin: 48px 0 16px;
+  margin: 24px 0 10px;
   font-size: 13px;
   font-weight: 700;
   line-height: 1.2;
@@ -122,10 +122,9 @@ body.landing-template {
 
 .landing-template main .ue-trial-container > .default-content-wrapper > h1 {
   grid-area: title;
-  margin: 48px 0 0;
-  padding-bottom: 32px;
-  max-width: calc(13ch + 2 * var(--landing-gutter));
-  font-size: clamp(39px, 4.2vw, 61px);
+  margin: 24px 0 0;
+  padding-bottom: 24px;
+  font-size: clamp(33px, 9vw, 44px);
   font-weight: 900;
   line-height: 1.02;
   letter-spacing: -0.025em;
@@ -231,7 +230,7 @@ body.landing-template {
   place-self: start center;
   width: min(500px, 100% - 32px);
   margin: 0 0 32px;
-  padding: 32px 24px;
+  padding: 24px 20px;
   border-radius: 24px;
   background: var(--landing-paper);
   box-shadow: var(--landing-shadow-lift);
@@ -786,6 +785,62 @@ body.landing-template {
   outline: 2px solid var(--landing-on-stage);
   outline-offset: 4px;
   border-radius: 2px;
+}
+
+/* ---------- under 900: touch sizes (the desktop form stays compact so Continue is in the first screen) ---------- */
+@media (width < 900px) {
+  .landing-template main .ue-trial .start-switch label {
+    min-height: 44px;
+  }
+
+  .landing-template main .ue-trial .agreement input[type="checkbox"],
+  .landing-template main .ue-trial .altcha-container .altcha-checkbox,
+  .landing-template main .ue-trial .altcha-container .altcha-checkbox input {
+    width: 24px;
+    height: 24px;
+  }
+
+  .landing-template main .ue-trial .agreement input[type="checkbox"] {
+    margin: 0;
+  }
+
+  /* padding widens what a thumb can hit; the negative margins keep the text where it was */
+  .landing-template main .ue-trial .agreement p:last-child label {
+    display: block;
+    margin-block: -10px -12px;
+    padding-block: 12px;
+  }
+
+  .landing-template main .ue-trial .altcha-container .altcha-label {
+    margin-block: -8px;
+    padding-block: 8px;
+  }
+
+  .landing-template main .ue-trial-container .availability-cta {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
+/* ---------- under 600: both tab labels on one line ---------- */
+@media (width < 600px) {
+  .landing-template main .ue-trial .start-switch label {
+    padding-inline: 2px;
+    font-size: 14px;
+    text-wrap: balance;
+  }
+}
+
+/* ---------- under 360: the website hint gets its own line ---------- */
+@media (width < 360px) {
+  .landing-template main .ue-trial .site-field {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .landing-template main .ue-trial .site-field .start-hint {
+    justify-content: flex-start;
+  }
 }
 
 /* ---------- ≥900: two columns ---------- */
