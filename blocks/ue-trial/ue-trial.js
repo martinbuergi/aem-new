@@ -1025,6 +1025,61 @@ async function buildForm(block) {
 }
 
 /**
+ * Landing template: scrolls back to the sign-up card and puts the cursor in a field.
+ * @param {HTMLElement} formSection
+ * @param {HTMLElement} [field]
+ */
+function goToForm(formSection, field) {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  formSection.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'start' });
+  field?.focus({ preventScroll: true });
+}
+
+/**
+ * Landing template: turns each remaining h2 and its paragraph into a path with a button that
+ * sets up the form. A heading written as "Question? Statement" becomes a label and a headline.
+ * The path that mentions migrating selects the own-site tab; the other selects the sample tab.
+ * @param {HTMLElement} block
+ * @param {HTMLElement} formSection
+ */
+function decoratePaths(block, formSection) {
+  const wrapper = block.closest('.section')?.querySelector('.ue-trial-wrapper ~ .default-content-wrapper');
+  const headings = wrapper ? [...wrapper.querySelectorAll(':scope > h2')] : [];
+  if (!headings.length) return;
+  wrapper.classList.add('landing-paths');
+
+  headings.forEach((heading) => {
+    const text = heading.nextElementSibling?.tagName === 'P' ? heading.nextElementSibling : null;
+    const path = createTag('div', { class: 'landing-path' });
+    heading.before(path);
+    path.append(heading);
+    if (text) path.append(text);
+
+    // authored text: set as text, never as HTML
+    const [, question, statement] = heading.textContent.trim().match(/^(.+?\?)\s+(.+)$/) || [];
+    if (question) {
+      const label = createTag('span', { class: 'landing-path-label' });
+      label.textContent = question;
+      heading.replaceChildren(label, statement);
+    }
+
+    const migrating = /migrate/i.test(text?.textContent || '');
+    const radio = formSection.querySelector(`#start-${migrating ? OWN_SITE_VALUE : 'template'}`);
+    if (!radio) return;
+    const cta = createTag('a', { class: 'landing-path-cta', href: '#business-email' }, migrating ? 'Migrate your site' : 'Explore a sample site');
+    cta.addEventListener('click', (e) => {
+      e.preventDefault();
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+      const email = formSection.querySelector('#business-email');
+      const site = formSection.querySelector('#site-url');
+      goToForm(formSection, migrating && email?.value ? site : email);
+    });
+    path.append(cta);
+  });
+}
+
+/**
  * Landing template: moves the first authored section after the block (its h2 and the
  * paragraphs and h3s that follow) into a wrapper of its own, so it can sit beside the form.
  * Authors keep writing it below the block; a section without h3s stays where it is.
@@ -1071,9 +1126,7 @@ function decorateAvailability(block, formSection) {
       const cta = createTag('a', { class: 'availability-cta', href: '#business-email' }, 'Try it now');
       cta.addEventListener('click', (e) => {
         e.preventDefault();
-        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        formSection.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'start' });
-        formSection.querySelector('#business-email')?.focus({ preventScroll: true });
+        goToForm(formSection, formSection.querySelector('#business-email'));
       });
       item.append(cta);
     }
@@ -1128,6 +1181,7 @@ export default async function decorate(block) {
     formSection.querySelector('altcha-widget')?.setAttribute('hidefooter', '');
     decorateAvailability(block, formSection);
     decorateLead(block);
+    decoratePaths(block, formSection);
   }
 
   // Clear the block and add the new layout
