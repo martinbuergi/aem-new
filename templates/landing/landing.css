@@ -561,6 +561,60 @@ body.landing-template {
   cursor: progress;
 }
 
+/* ---------- content after the block: its own wrapper, laid out apart from the top grid ---------- */
+.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper {
+  display: block;
+  grid-column: 1 / -1;
+  max-width: none;
+  margin: 0;
+  padding-inline: var(--landing-gutter);
+}
+
+.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > * {
+  padding-inline: 0;
+}
+
+.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2 {
+  margin: 64px 0 12px;
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--landing-on-stage);
+  text-wrap: balance;
+}
+
+.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:first-child {
+  margin: 0 0 16px;
+  font-size: clamp(32px, 3.2vw, 46px);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+
+.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > p {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--landing-on-stage-soft);
+  text-wrap: pretty;
+}
+
+.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:first-child + p {
+  max-width: 58ch;
+  font-size: 20px;
+}
+
+.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h3 {
+  margin: 32px 0 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--landing-rule);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--landing-on-stage);
+}
+
 /* ---------- availability strip (built by ue-trial.js from the authored sentence) ---------- */
 .landing-template main .ue-trial-container .availability {
   grid-column: 1 / -1;
@@ -724,6 +778,52 @@ body.landing-template {
 }
 
 @media (width >= 900px) {
+  /*
+   * Definite rows keep each heading above its own paragraph: items sharing a row fill its
+   * columns in source order. Anything else authored here spans the full width below.
+   */
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    column-gap: 40px;
+    padding-top: 24px;
+  }
+
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > * {
+    grid-column: 1 / -1;
+  }
+
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:first-child {
+    grid-row: 1;
+  }
+
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:first-child + p {
+    grid-row: 2;
+  }
+
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h3 {
+    grid-column: span 2;
+    grid-row: 3;
+    margin-top: 40px;
+  }
+
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h3 + p {
+    grid-column: span 2;
+    grid-row: 4;
+  }
+
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h3 ~ h2 {
+    grid-column: span 3;
+    grid-row: 5;
+    max-width: 18em;
+    margin-top: 72px;
+  }
+
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h3 ~ h2 + p {
+    grid-column: span 3;
+    grid-row: 6;
+  }
+
   .landing-template main .ue-trial-container .availability {
     grid-template-columns: none;
     grid-auto-flow: column;
