@@ -94,22 +94,36 @@ const START_HINTS = {
 };
 
 /**
+ * A public website address: optional http(s) scheme, a dotted hostname with a real top-level
+ * domain (international names included), optional port, path, query or fragment.
+ * Addresses without a domain, such as localhost or IP addresses, don't match.
+ */
+const SITE_URL_PATTERN = /^(?:https?:\/\/)?(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+(?:\p{L}{2,63}|xn--[a-z0-9-]{2,59})(?::\d{1,5})?(?:[/?#]\S*)?$/iu;
+const SITE_URL_MESSAGE = 'Enter your website address, like www.example.com';
+
+/**
  * Normalizes what a visitor typed into an absolute http(s) URL.
  * @param {string} value - e.g. "example.com", "https://www.example.com/en"
  * @returns {string|null} the normalized URL, or null if it isn't a usable website address
  */
 function normalizeSiteUrl(value) {
   const trimmed = (value || '').trim();
-  if (!trimmed) return null;
+  if (!SITE_URL_PATTERN.test(trimmed)) return null;
   const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
   try {
-    const url = new URL(withScheme);
-    const host = url.hostname;
-    if (!['http:', 'https:'].includes(url.protocol) || !host.includes('.') || host.endsWith('.')) return null;
-    return url.href;
+    return new URL(withScheme).href;
   } catch (e) {
     return null;
   }
+}
+
+/**
+ * Flags a badly formed address, so Continue reports it along with the form's other required
+ * fields. An empty field is left to `required`.
+ * @param {HTMLInputElement} input
+ */
+function validateSiteUrl(input) {
+  input.setCustomValidity(input.value.trim() && !normalizeSiteUrl(input.value) ? SITE_URL_MESSAGE : '');
 }
 
 /**
@@ -131,7 +145,7 @@ function buildSiteField() {
   const hint = createTag('p', { class: 'start-hint slow', id: 'site-url-hint' }, START_HINTS[OWN_SITE_VALUE]);
   field.append(createTag('label', { for: 'site-url' }, 'Your website'), hint, input);
   input.addEventListener('input', () => {
-    input.setCustomValidity('');
+    validateSiteUrl(input);
     input.closest('form')?.querySelector('.own-site-note')?.remove();
   });
   return { field, input };
@@ -188,7 +202,8 @@ function buildOwnSitePath(ownSite, templateGrid) {
     templateGrid.hidden = ownSiteSelected;
     // a hidden field must not block Continue on the sample path
     siteInput.required = ownSiteSelected;
-    siteInput.setCustomValidity('');
+    if (ownSiteSelected) validateSiteUrl(siteInput);
+    else siteInput.setCustomValidity('');
     // the switch row stands in for the selected template card
     const card = templateGrid.querySelector('.template-card.selected') || templateGrid.querySelector('.template-card');
     const img = card?.querySelector('img');
@@ -1001,7 +1016,7 @@ async function buildForm(block) {
       const urlInput = form.querySelector('#site-url');
       const siteUrl = normalizeSiteUrl(urlInput.value);
       if (!siteUrl) {
-        urlInput.setCustomValidity('Enter your website address, like www.example.com');
+        urlInput.setCustomValidity(SITE_URL_MESSAGE);
         urlInput.reportValidity();
         return;
       }
