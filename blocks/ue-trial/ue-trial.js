@@ -1059,6 +1059,44 @@ async function buildForm(block) {
   return form;
 }
 
+/**
+ * Landing template: turns the authored sentence "Available now for X. Coming soon for Y and Z."
+ * into a status strip. Any other wording stays a plain paragraph.
+ * @param {HTMLElement} block
+ * @param {HTMLElement} formSection - where "Try it now" takes the visitor
+ */
+function decorateAvailability(block, formSection) {
+  const pattern = /^available now for (.+?)\.\s*coming soon for (.+?)\.?$/i;
+  const paragraph = [...(block.closest('.section')?.querySelectorAll('.default-content-wrapper > p') || [])]
+    .find((p) => pattern.test(p.textContent.trim()));
+  if (!paragraph) return;
+
+  const [, live, soon] = paragraph.textContent.trim().match(pattern);
+  const products = (text) => text.split(/\s*,\s*|\s+and\s+/).filter(Boolean);
+  const list = createTag('ul', { class: 'availability', 'aria-label': 'Availability' });
+
+  const addItem = (name, status, isLive) => {
+    const item = createTag('li', { class: `availability-item${isLive ? ' is-live' : ''}` });
+    const nameEl = createTag('span', { class: 'availability-name' });
+    nameEl.textContent = name;
+    item.append(createTag('span', { class: 'availability-status' }, status), nameEl);
+    if (isLive) {
+      const cta = createTag('a', { class: 'availability-cta', href: '#business-email' }, 'Try it now');
+      cta.addEventListener('click', (e) => {
+        e.preventDefault();
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        formSection.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'start' });
+        formSection.querySelector('#business-email')?.focus({ preventScroll: true });
+      });
+      item.append(cta);
+    }
+    list.append(item);
+  };
+  products(live).forEach((name) => addItem(name, 'Available now', true));
+  products(soon).forEach((name) => addItem(name, 'Coming soon', false));
+  paragraph.replaceWith(list);
+}
+
 export default async function decorate(block) {
   // Get the original content from the block (excluding template-selection-data)
   const infoContent = block.querySelector(':scope > div:first-child');
@@ -1099,6 +1137,7 @@ export default async function decorate(block) {
     }
     // a compact captcha: the "Protected by ALTCHA" footer adds a second row to the box
     formSection.querySelector('altcha-widget')?.setAttribute('hidefooter', '');
+    decorateAvailability(block, formSection);
   }
 
   // Clear the block and add the new layout

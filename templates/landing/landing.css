@@ -9,6 +9,7 @@
  */
 body.landing-template {
   --landing-paper: oklch(99.6% 0.002 265deg);
+  --landing-live: oklch(84% 0.15 150deg);
   --landing-ink: oklch(22% 0.01 265deg);
   --landing-ink-soft: oklch(41% 0.015 265deg);
   --landing-ink-quiet: oklch(52% 0.015 265deg);
@@ -560,6 +561,85 @@ body.landing-template {
   cursor: progress;
 }
 
+/* ---------- availability strip (built by ue-trial.js from the authored sentence) ---------- */
+.landing-template main .ue-trial-container .availability {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 40px 0 72px;
+  padding-block: 0;
+  list-style: none;
+}
+
+.landing-template main .ue-trial-container .availability-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 20px 0;
+  border-top: 1px solid var(--landing-rule);
+}
+
+.landing-template main .ue-trial-container .availability-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--landing-on-stage-soft);
+}
+
+.landing-template main .ue-trial-container .availability-status::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentcolor;
+  border-radius: 50%;
+}
+
+.landing-template main .ue-trial-container .availability-item.is-live .availability-status {
+  color: var(--landing-live);
+}
+
+.landing-template main .ue-trial-container .availability-item.is-live .availability-status::before {
+  background: currentcolor;
+}
+
+.landing-template main .ue-trial-container .availability-name {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--landing-on-stage-soft);
+}
+
+.landing-template main .ue-trial-container .availability-item.is-live .availability-name {
+  color: var(--landing-on-stage);
+}
+
+.landing-template main .ue-trial-container .availability-cta {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--landing-on-stage);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.landing-template main .ue-trial-container .availability-cta:hover {
+  color: var(--landing-on-stage-accent);
+}
+
+.landing-template main .ue-trial-container .availability-cta:focus-visible {
+  outline: 2px solid var(--landing-on-stage);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
 /* ---------- ≥900: two columns ---------- */
 @media (width >= 900px) {
   body.landing-template {
@@ -635,12 +715,20 @@ body.landing-template {
   }
 
   .landing-template main .ue-trial .form-section {
-    position: sticky;
-    top: 32px;
+    scroll-margin-top: 24px;
     justify-self: start;
     width: min(500px, 100% - var(--landing-gutter) - 32px);
     margin: 0 0 48px var(--landing-gutter);
     padding: 28px 32px 32px;
+  }
+}
+
+@media (width >= 900px) {
+  .landing-template main .ue-trial-container .availability {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 40px;
   }
 }
 
