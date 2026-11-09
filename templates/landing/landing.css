@@ -564,40 +564,92 @@ body.landing-template {
   cursor: progress;
 }
 
-/* ---------- content after the block: its own wrapper, laid out apart from the top grid ---------- */
+/* ---------- two paths: "new to AEM" or "already running AEM" (built by ue-trial.js) ---------- */
 .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper {
   display: block;
   grid-area: pair;
   max-width: none;
-  margin: 0;
-  padding-block: 28px 0;
-  padding-inline: var(--landing-gutter);
+  margin: 32px 0 0;
+  padding: 0 var(--landing-gutter);
+
+  /* a lighter band that reaches the screen edges even where the content stops at 1440px */
+  --landing-band: oklch(98% 0.003 20deg / 6%);
+
+  background: var(--landing-band);
+  box-shadow: 0 0 0 100vmax var(--landing-band);
+  clip-path: inset(0 -100vmax);
 }
 
-.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > * {
-  padding-inline: 0;
+.landing-template main .landing-paths > .landing-path {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 40px 0;
 }
 
-.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2 {
-  margin: 64px 0 12px;
-  font-size: 26px;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+.landing-template main .landing-paths > .landing-path + .landing-path {
+  border-top: 1px solid var(--landing-rule);
+}
+
+.landing-template main .landing-path > h2 {
+  margin: 0 0 14px;
+  padding: 0;
+  font-size: clamp(28px, 2.7vw, 38px);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
   color: var(--landing-on-stage);
   text-wrap: balance;
 }
 
-.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:first-child {
-  margin-top: 0;
+.landing-template main .landing-path-label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--landing-on-stage-accent);
 }
 
-.landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > p {
+.landing-template main .landing-path > p {
   margin: 0;
-  max-width: 62ch;
+  padding: 0;
+  max-width: 54ch;
   font-size: 17px;
   line-height: 1.5;
   color: var(--landing-on-stage-soft);
   text-wrap: pretty;
+}
+
+.landing-template main .landing-path-cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  margin-top: auto;
+  padding: 0 24px;
+  border: 1.5px solid var(--landing-on-stage);
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--landing-on-stage);
+  text-decoration: none;
+  transition: background-color 160ms var(--landing-ease), color 160ms var(--landing-ease);
+}
+
+/* keeps the gap when the text is the taller side; margin-top: auto lines the buttons up */
+.landing-template main .landing-path > p:has(+ .landing-path-cta) {
+  margin-bottom: 24px;
+}
+
+.landing-template main .landing-path-cta:hover {
+  background: var(--landing-on-stage);
+  color: var(--landing-stage);
+}
+
+.landing-template main .landing-path-cta:focus-visible {
+  outline: 2px solid var(--landing-on-stage);
+  outline-offset: 3px;
 }
 
 /* ---------- lead section (the first authored section after the block, moved here by ue-trial.js) ---------- */
@@ -759,7 +811,7 @@ body.landing-template {
   /* below the form: the intro and the list's lead-in side by side, on the columns above; the list runs full width */
   .landing-template main .ue-trial-container > .default-content-wrapper > h1 + p {
     margin: 0;
-    padding-top: 40px;
+    padding-top: 56px;
     padding-right: 0;
     max-width: none;
     color: var(--landing-on-stage-soft);
@@ -807,7 +859,7 @@ body.landing-template {
   .landing-template main .ue-trial .trial-info > div > div:nth-child(2) > p:has(+ ul) {
     grid-area: explore;
     margin: 0;
-    padding: 40px var(--landing-gutter) 0 clamp(32px, 4vw, 72px);
+    padding: 56px var(--landing-gutter) 0 clamp(32px, 4vw, 72px);
     line-height: 1.5;
   }
 
@@ -821,37 +873,24 @@ body.landing-template {
 }
 
 @media (width >= 900px) {
-  /*
-   * Definite rows keep each heading above its own paragraph: items sharing a row fill its
-   * columns in source order. Anything else authored here spans the full width below.
-   */
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper {
+  /* the section's own two columns, so the paths line up with the form and lead above */
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper.landing-paths {
     display: grid;
-
-    /* the section's own two columns, so this pair lines up with the form and lead above */
     grid-template-columns: subgrid;
-    column-gap: 0;
-    padding-block: 8px 8px;
+    margin-top: 8px;
   }
 
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > * {
-    grid-column: 1 / -1;
+  .landing-template main .landing-paths > .landing-path {
+    padding-block: 56px;
+    padding-right: 40px;
   }
 
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2 {
-    grid-column: auto;
-    grid-row: 1;
-    margin-top: 0;
-  }
-
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2 + p {
-    grid-column: auto;
-    grid-row: 2;
-  }
-
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:nth-of-type(2),
-  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:nth-of-type(2) + p {
+  .landing-template main .landing-paths > .landing-path + .landing-path {
+    padding-right: 0;
+    margin-left: -1px;
     padding-left: clamp(32px, 4vw, 72px);
+    border-top: 0;
+    border-left: 1px solid var(--landing-rule);
   }
 
   .landing-template main .ue-trial-container .availability {
