@@ -47,6 +47,7 @@ body.landing-template {
     "title"
     "signup"
     "lead"
+    "pair"
     "intro"
     "itinerary";
   max-width: none;
@@ -340,11 +341,12 @@ body.landing-template {
 }
 
 .landing-template main .ue-trial .own-site-panel {
+  gap: var(--landing-form-gap);
   margin: 0;
 }
 
-.landing-template main .ue-trial .own-site-panel .help-text {
-  color: var(--landing-ink-quiet);
+.landing-template main .ue-trial .site-field .start-hint {
+  margin: 0;
 }
 
 .landing-template main .ue-trial .while-you-wait {
@@ -565,9 +567,10 @@ body.landing-template {
 /* ---------- content after the block: its own wrapper, laid out apart from the top grid ---------- */
 .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper {
   display: block;
-  grid-column: 1 / -1;
+  grid-area: pair;
   max-width: none;
   margin: 0;
+  padding-block: 28px 0;
   padding-inline: var(--landing-gutter);
 }
 
@@ -650,6 +653,7 @@ body.landing-template {
   grid-template-columns: minmax(0, 1fr);
   margin: 40px 0 72px;
   padding-block: 0;
+  padding-inline: var(--landing-gutter);
   list-style: none;
 }
 
@@ -734,6 +738,7 @@ body.landing-template {
       "eyebrow eyebrow" auto
       "title title" auto
       "signup lead" auto
+      "pair pair" auto
       "intro explore" auto
       "itinerary itinerary" 1fr
       / minmax(0, 6fr) minmax(0, 6fr);
@@ -767,7 +772,7 @@ body.landing-template {
   .landing-template main .ue-trial .trial-info > div > div:nth-child(2) ul {
     grid-area: itinerary;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: 32px var(--landing-gutter) 64px;
+    padding: 32px var(--landing-gutter) 24px;
   }
 
   /* the title runs across the page on one line where it fits */
@@ -822,9 +827,11 @@ body.landing-template {
    */
   .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 40px;
-    padding-top: 24px;
+
+    /* the section's own two columns, so this pair lines up with the form and lead above */
+    grid-template-columns: subgrid;
+    column-gap: 0;
+    padding-block: 8px 8px;
   }
 
   .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > * {
@@ -834,13 +841,17 @@ body.landing-template {
   .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2 {
     grid-column: auto;
     grid-row: 1;
-    max-width: 18em;
     margin-top: 0;
   }
 
   .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2 + p {
     grid-column: auto;
     grid-row: 2;
+  }
+
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:nth-of-type(2),
+  .landing-template main .ue-trial-container > .ue-trial-wrapper ~ .default-content-wrapper > h2:nth-of-type(2) + p {
+    padding-left: clamp(32px, 4vw, 72px);
   }
 
   .landing-template main .ue-trial-container .availability {
@@ -947,37 +958,6 @@ body.landing-template {
     opacity: 1;
     transform: none;
   }
-}
-
-/* migrate path, step 2 */
-.landing-template main .ue-trial .site-step-back {
-  color: var(--landing-blue-deep);
-}
-
-.landing-template main .ue-trial .site-step-back:focus-visible {
-  outline: none;
-  border-radius: 4px;
-  box-shadow: var(--landing-ring);
-}
-
-.landing-template main .ue-trial .site-step-title {
-  font-size: 22px;
-  font-weight: 900;
-  color: var(--landing-ink);
-}
-
-.landing-template main .ue-trial .site-step .help-text {
-  margin: 0;
-  font-size: 13px;
-  color: var(--landing-ink-quiet);
-}
-
-.landing-template main .ue-trial .site-step-extra {
-  color: var(--landing-ink-soft);
-}
-
-.landing-template main .ue-trial .site-step .own-site-note {
-  order: 0;
 }
 
 .landing-template main .ue-trial .migration-banner {
