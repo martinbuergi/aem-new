@@ -918,10 +918,12 @@ async function buildForm(block) {
     // Clone the extracted content to preserve the original structure
     const clonedContent = termsAndConditions.cloneNode(true);
 
-    // Find the last paragraph and restructure it with checkbox and label
-    const paragraphs = clonedContent.querySelectorAll('p');
+    // The checkbox goes on the paragraph that says the terms were accepted (the last one otherwise)
+    const paragraphs = [...clonedContent.querySelectorAll('p')];
     if (paragraphs.length > 0) {
-      const lastParagraph = paragraphs[paragraphs.length - 1];
+      const lastParagraph = paragraphs.find((p) => /\baccept/i.test(p.textContent))
+        || paragraphs[paragraphs.length - 1];
+      lastParagraph.classList.add('agreement-check');
 
       // Create checkbox
       const checkbox = createTag('input', {
@@ -1117,6 +1119,44 @@ function decorateLead(block) {
 }
 
 /**
+ * Landing template: gathers the intro and the agent list into wrappers of their own below the
+ * two paths. Authors write them after the paths: the intro first, then the list's lead-in and the
+ * list. Older content (the intro after the h1, the list in the block's first row) still works.
+ * @param {HTMLElement} block
+ * @param {HTMLElement} trialInfo
+ */
+function decorateIntro(block, trialInfo) {
+  const section = block.closest('.section');
+  if (!section) return;
+  const after = section.querySelector('.ue-trial-wrapper ~ .default-content-wrapper');
+  const loose = after ? [...after.querySelectorAll(':scope > p, :scope > ul')] : [];
+  const list = loose.find((el) => el.tagName === 'UL')
+    || trialInfo.querySelector(':scope > div > div > ul');
+  const listLead = list?.previousElementSibling?.tagName === 'P' ? list.previousElementSibling : null;
+  let intro = loose.filter((el) => el.tagName === 'P' && el !== listLead);
+  if (!intro.length) {
+    const below = section.querySelector('.default-content-wrapper > h1 + p');
+    intro = below ? [below] : [];
+  }
+
+  const wrappers = [];
+  if (intro.length) {
+    const wrapper = createTag('div', { class: 'landing-intro' });
+    wrapper.append(...intro);
+    wrappers.push(wrapper);
+  }
+  if (list) {
+    const cell = list.parentElement;
+    const wrapper = createTag('div', { class: 'landing-explore' });
+    wrapper.append(...[listLead, list].filter(Boolean));
+    wrappers.push(wrapper);
+    // the block cell the list came from has nothing left to show
+    if (cell.closest('.trial-info') && !cell.children.length) cell.hidden = true;
+  }
+  (after || block.closest('.ue-trial-wrapper'))?.after(...wrappers);
+}
+
+/**
  * Landing template: turns the authored sentence "Available now for X. Coming soon for Y and Z."
  * into a status strip. Any other wording stays a plain paragraph.
  * @param {HTMLElement} block
@@ -1185,8 +1225,16 @@ export default async function decorate(block) {
       mark.querySelectorAll('img').forEach((img) => { img.alt = ''; });
       mark.append(createTag('span', { class: 'lockup-name' }, 'Adobe Experience Manager'));
     }
-    // the note after the agent list is a sign-up condition: show it next to Continue
-    const notice = trialInfo.querySelector(':scope > div > div > ul + p');
+    // the bold note is a sign-up condition: show it next to Continue. Authors write it in the
+    // terms cell after the checkbox line; older content has it after the agent list.
+    const isNote = (p) => {
+      const bold = p.querySelector(':scope > strong');
+      return bold && p.textContent.trim() === bold.textContent.trim();
+    };
+    const notice = [
+      ...formSection.querySelectorAll('.agreement p:not(.agreement-check)'),
+      ...trialInfo.querySelectorAll(':scope > div > div > p'),
+    ].find(isNote);
     const buttonContainer = formSection.querySelector('form .button-container');
     if (notice && buttonContainer) {
       notice.classList.add('form-notice');
@@ -1197,6 +1245,7 @@ export default async function decorate(block) {
     decorateAvailability(block, formSection);
     decorateLead(block);
     decoratePaths(block, formSection);
+    decorateIntro(block, trialInfo);
   }
 
   // Clear the block and add the new layout

@@ -136,9 +136,11 @@ body.landing-template {
   margin-top: 0;
 }
 
-.landing-template main .ue-trial-container > .default-content-wrapper > h1 + p {
+/* ---------- intro (below the two paths, gathered by ue-trial.js) ---------- */
+.landing-template main .ue-trial-container > .landing-intro {
   grid-area: intro;
   margin: 40px 0 0;
+  padding-inline: var(--landing-gutter);
   max-width: calc(54ch + 2 * var(--landing-gutter));
   font-size: 20px;
   line-height: 1.5;
@@ -146,15 +148,23 @@ body.landing-template {
   text-wrap: pretty;
 }
 
-/* ---------- itinerary (block row 1, cell 2) ---------- */
-.landing-template main .ue-trial .trial-info > div > div:nth-child(2) {
+.landing-template main .landing-intro > p {
+  margin: 0;
+}
+
+.landing-template main .landing-intro > p + p {
+  margin-top: 1em;
+}
+
+/* ---------- itinerary: the agent list and its lead-in (gathered by ue-trial.js) ---------- */
+.landing-template main .ue-trial-container > .landing-explore {
   grid-area: itinerary;
+  max-width: none;
+  margin: 0;
   padding: 40px var(--landing-gutter) 64px;
 }
 
-.landing-template main .ue-trial .trial-info > div > div:nth-child(2) > p:first-child,
-.landing-template main .ue-trial .trial-info > div > div:nth-child(2) > ul + p ~ p,
-.landing-template main .ue-trial .trial-info > div > div:nth-child(2) > p:has(+ ul) {
+.landing-template main .landing-explore > p {
   margin: 0 0 24px;
   font-size: 20px;
   font-weight: 700;
@@ -162,7 +172,7 @@ body.landing-template {
   color: var(--landing-on-stage);
 }
 
-.landing-template main .ue-trial .trial-info > div > div:nth-child(2) ul {
+.landing-template main .landing-explore ul {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0 40px;
@@ -172,7 +182,7 @@ body.landing-template {
   counter-reset: stop;
 }
 
-.landing-template main .ue-trial .trial-info > div > div:nth-child(2) li {
+.landing-template main .landing-explore li {
   display: grid;
   grid-template-columns: 36px 1fr;
   gap: 12px;
@@ -186,7 +196,7 @@ body.landing-template {
   counter-increment: stop;
 }
 
-.landing-template main .ue-trial .trial-info > div > div:nth-child(2) li::before {
+.landing-template main .landing-explore li::before {
   content: counter(stop, decimal-leading-zero);
   font-size: 14px;
   font-weight: 900;
@@ -195,7 +205,7 @@ body.landing-template {
   font-variant-numeric: tabular-nums;
 }
 
-/* sign-up condition (the paragraph after the agent list, moved next to Continue by ue-trial.js) */
+/* sign-up condition (the bold note, moved next to Continue by ue-trial.js) */
 .landing-template main .ue-trial .form-notice {
   order: 3;
   display: flex;
@@ -471,11 +481,12 @@ body.landing-template {
   color: var(--landing-ink-quiet);
 }
 
-.landing-template main .ue-trial .agreement p:first-child {
+.landing-template main .ue-trial .agreement p:first-child:not(.agreement-check),
+.landing-template main .ue-trial .agreement .agreement-check:first-child + p {
   margin-top: calc(14px - var(--landing-form-gap));
 }
 
-.landing-template main .ue-trial .agreement p:last-child {
+.landing-template main .ue-trial .agreement p.agreement-check {
   order: 1;
   display: flex;
   align-items: flex-start;
@@ -486,7 +497,7 @@ body.landing-template {
   color: var(--landing-ink);
 }
 
-.landing-template main .ue-trial .agreement p:last-child label {
+.landing-template main .ue-trial .agreement p.agreement-check label {
   font-size: inherit;
   color: inherit;
 }
@@ -805,7 +816,7 @@ body.landing-template {
   }
 
   /* padding widens what a thumb can hit; the negative margins keep the text where it was */
-  .landing-template main .ue-trial .agreement p:last-child label {
+  .landing-template main .ue-trial .agreement p.agreement-check label {
     display: block;
     margin-block: -10px -12px;
     padding-block: 12px;
@@ -874,7 +885,7 @@ body.landing-template {
   }
 
   /* below the form: the intro and the list's lead-in side by side, on the columns above; the list runs full width */
-  .landing-template main .ue-trial-container > .default-content-wrapper > h1 + p {
+  .landing-template main .ue-trial-container > .landing-intro {
     margin: 0;
     padding-top: 56px;
     padding-right: 0;
@@ -882,11 +893,11 @@ body.landing-template {
     color: var(--landing-on-stage-soft);
   }
 
-  .landing-template main .ue-trial .trial-info > div > div:nth-child(2) {
+  .landing-template main .ue-trial-container > .landing-explore {
     display: contents;
   }
 
-  .landing-template main .ue-trial .trial-info > div > div:nth-child(2) ul {
+  .landing-template main .landing-explore ul {
     grid-area: itinerary;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 32px var(--landing-gutter) 24px;
@@ -921,7 +932,7 @@ body.landing-template {
     margin-top: 0;
   }
 
-  .landing-template main .ue-trial .trial-info > div > div:nth-child(2) > p:has(+ ul) {
+  .landing-template main .landing-explore > p {
     grid-area: explore;
     margin: 0;
     padding: 56px var(--landing-gutter) 0 clamp(32px, 4vw, 72px);
@@ -981,7 +992,7 @@ body.landing-template {
     width: min(540px, 100% - var(--landing-gutter) - 40px);
   }
 
-  .landing-template main .ue-trial .trial-info > div > div:nth-child(2) ul {
+  .landing-template main .landing-explore ul {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
