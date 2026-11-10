@@ -254,6 +254,24 @@ const TRIAL_STEPS = [
   { key: 'sendNotification', label: 'Sending notification' },
 ];
 
+// Experience Workspace trials skip the permissions step and run the others in this order
+const EW_TRIAL_STEPS = [
+  { key: 'createUser', label: 'Creating user account' },
+  { key: 'codeBus', label: 'Configuring site' },
+  { key: 'quicksite', label: 'Copying template content' },
+  { key: 'publishContent', label: 'Previewing and publishing content' },
+  { key: 'sendNotification', label: 'Sending notification' },
+];
+
+/**
+ * The steps the backend reports for the trial this form registers.
+ * @param {HTMLFormElement} form
+ * @returns {Array<{key: string, label: string}>}
+ */
+function trialSteps(form) {
+  return form.closest('.ue-trial')?.classList.contains('ew') ? EW_TRIAL_STEPS : TRIAL_STEPS;
+}
+
 // Mapping object for step names to readable text for error messages
 const STEP_NAME_MAPPING = {
   createUser: 'user account creation',
@@ -426,6 +444,7 @@ function showSuccessMessage(element) {
 function createStatusInline(form) {
   const statusContainer = createTag('div', { class: 'status-container' });
   const { migratingHost, migratingEmail } = form.dataset;
+  const steps = trialSteps(form);
   form.innerHTML = '';
   if (migratingHost) {
     // migrate path with a sample site: the migration keeps running in the background
@@ -442,7 +461,7 @@ function createStatusInline(form) {
   const stepsContainer = createTag('div', { class: 'steps-container' });
 
   // Create step elements for each major step
-  TRIAL_STEPS.forEach((step) => {
+  steps.forEach((step) => {
     const stepElement = createTag('div', {
       class: 'step-item',
       'data-step': step.key,
@@ -476,7 +495,7 @@ function createStatusInline(form) {
 }
 
 function updateStatusInline(form, status) {
-  const steps = TRIAL_STEPS.map((step) => step.key);
+  const steps = trialSteps(form).map((step) => step.key);
   let errorMessage = null;
   let errorStep = null;
   let hasError = false;
@@ -661,11 +680,12 @@ function processFormData(form) {
 function simulateStatus(form) {
   const status = { status: { finished: false } };
   updateStatusInline(form, status);
-  TRIAL_STEPS.forEach((step, index) => {
+  const steps = trialSteps(form);
+  steps.forEach((step, index) => {
     setTimeout(() => {
       status[step.key] = { result: 'success' };
       updateStatusInline(form, status);
-      if (index === TRIAL_STEPS.length - 1) {
+      if (index === steps.length - 1) {
         showSuccessMessage(form.querySelector('.status-container'));
       }
     }, 700 * (index + 1));
@@ -981,6 +1001,9 @@ async function buildForm(block) {
       value: 'agentic-playground',
     });
     buttonContainer.append(hiddenScopeInput);
+  }
+  if (block.classList.contains('ew')) {
+    buttonContainer.append(createTag('input', { type: 'hidden', name: 'target', value: 'ew' }));
   }
   const submitButton = createTag('button', {
     type: 'submit',
