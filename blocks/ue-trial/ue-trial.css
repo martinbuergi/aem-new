@@ -545,13 +545,6 @@
   outline-offset: 2px;
 }
 
-.ue-trial .own-site-note {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #4b4b4b;
-}
-
 /* stylelint-disable-next-line no-descending-specificity -- different elements than the earlier rule */
 .ue-trial .own-site-confirmation h3 {
   margin: 0 0 8px;
