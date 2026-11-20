@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Stacker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="./stacker.css">
+    <script src="./stacker.js" type="module"></script>
+  </head>
+  <body>
+    <main class="stacker" tabindex="0" aria-label="Stacker game. Use arrow keys to play.">
+      <header class="hud">
+        <div class="box">
+          <span class="label">Hold</span>
+          <canvas class="mini" id="hold" width="80" height="60"></canvas>
+        </div>
+        <dl class="stats">
+          <div><dt>Score</dt><dd id="score">0</dd></div>
+          <div><dt>Level</dt><dd id="level">1</dd></div>
+          <div><dt>Lines</dt><dd id="lines">0</dd></div>
+          <div><dt>Best</dt><dd id="best">0</dd></div>
+        </dl>
+        <div class="box">
+          <span class="label">Next</span>
+          <canvas class="mini" id="next" width="80" height="60"></canvas>
+        </div>
+      </header>
+
+      <div class="board-wrap">
+        <canvas id="board" width="200" height="400"></canvas>
+        <div class="overlay" id="overlay">
+          <h1 id="overlay-title">Stacker</h1>
+          <p id="overlay-text">Clear lines by filling rows.</p>
+          <button type="button" id="start">Start</button>
+          <ul class="keys">
+            <li><kbd>←</kbd><kbd>→</kbd> move</li>
+            <li><kbd>↑</kbd> / <kbd>X</kbd> rotate · <kbd>Z</kbd> counter</li>
+            <li><kbd>↓</kbd> soft drop · <kbd>Space</kbd> hard drop</li>
+            <li><kbd>C</kbd> hold · <kbd>P</kbd> pause</li>
+          </ul>
+        </div>
+      </div>
+
+      <nav class="pad" aria-label="Touch controls">
+        <button type="button" data-act="left" aria-label="Move left">◀</button>
+        <button type="button" data-act="rotate" aria-label="Rotate">⟳</button>
+        <button type="button" data-act="right" aria-label="Move right">▶</button>
+        <button type="button" data-act="hold" aria-label="Hold">Hold</button>
+        <button type="button" data-act="soft" aria-label="Soft drop">▼</button>
+        <button type="button" data-act="hard" aria-label="Hard drop">⤓</button>
+        <button type="button" data-act="pause" aria-label="Pause" class="wide">Pause</button>
+      </nav>
+    </main>
+  </body>
+</html>
