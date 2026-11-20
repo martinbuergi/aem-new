@@ -407,25 +407,42 @@ body.landing-template {
   box-shadow: var(--landing-ring);
 }
 
-.landing-template main .ue-trial .own-site-note {
-  order: 3;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: var(--landing-blue-wash);
-  font-size: 14px;
-  color: var(--landing-ink);
+/* migrating only: the same white card as the sample's setup progress, so both paths end alike */
+.landing-template main .ue-trial .own-site-confirmation {
+  padding: 40px 32px 32px;
+  border: 1px solid #ececec;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 2px 16px rgb(0 0 0 / 10%);
+  text-align: left;
 }
 
 .landing-template main .ue-trial .own-site-confirmation h3 {
+  margin: 0 0 12px;
   font-size: 22px;
-  font-weight: 900;
-  color: var(--landing-ink);
+  font-weight: 800;
+  color: #1a1a1a;
 }
 
 .landing-template main .ue-trial .own-site-confirmation p {
+  margin: 0;
   font-size: 16px;
   line-height: 1.5;
-  color: var(--landing-ink-soft);
+  color: #4b4b4b;
+}
+
+.landing-template main .ue-trial .own-site-confirmation p + p {
+  margin-top: 16px;
+}
+
+.landing-template main .ue-trial .own-site-confirmation .migration-link.button {
+  display: inline-block;
+  margin: 8px 0 0;
+  padding: 10px 24px;
+  border-radius: 999px;
+  background: var(--landing-blue);
+  color: #fff;
+  text-decoration: none;
 }
 
 .landing-template main .ue-trial .template-card {
@@ -597,6 +614,22 @@ body.landing-template {
 .landing-template main .ue-trial button.continue:disabled {
   background: var(--landing-ink-quiet);
   cursor: progress;
+}
+
+/* incomplete form: Continue sits back in a quiet grey, still clickable so a click points at the
+   first missing field, and eases into blue once everything is filled in */
+.landing-template main .ue-trial form button.continue {
+  transition: background-color 320ms var(--landing-ease), color 320ms var(--landing-ease), transform 160ms var(--landing-ease);
+}
+
+.landing-template main .ue-trial form button.continue[aria-disabled='true'],
+.landing-template main .ue-trial form button.continue[aria-disabled='true']:hover {
+  background: color-mix(in oklch, var(--landing-ink-quiet) 24%, var(--landing-paper));
+  color: var(--landing-ink-quiet);
+}
+
+.landing-template main .ue-trial form button.continue[aria-disabled='true']:active {
+  transform: none;
 }
 
 /* ---------- two paths: "new to AEM" or "already running AEM" (built by ue-trial.js) ---------- */
@@ -1107,9 +1140,163 @@ body.landing-template {
   }
 }
 
+/* migrating with the sample too: the migration's note heads the white setup card, plain text on the
+   card's own left edge, ruled off from the steps */
 .landing-template main .ue-trial .migration-banner {
-  background: var(--landing-blue-wash);
-  color: var(--landing-ink);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+  color: #1a1a1a;
+}
+
+.landing-template main .ue-trial .migration-banner p {
+  margin: 0;
+  color: #4b4b4b;
+}
+
+.landing-template main .ue-trial :is(.migration-banner, .own-site-confirmation) .migration-link:not(.button) {
+  font-weight: 700;
+  color: oklch(48% 0.19 256deg);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* the migration's lead reads exactly like the own-site-only card */
+.landing-template main .ue-trial .migration-banner h3 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1a1a;
+}
+
+.landing-template main .ue-trial .migration-banner p + p {
+  margin-top: 16px;
+}
+
+/* own site plus the sample: no second progress, the sample is one quiet line under a rule */
+.landing-template main .ue-trial .migration-banner .sample-note {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e1e1e1;
+}
+
+.landing-template main .ue-trial .status-container.compact .migration-banner ~ :is(.status-header, .steps-container) {
+  display: none;
+}
+
+/* sample only: the heading, one line on what comes by email, then the timeline */
+.landing-template main .ue-trial .status-container.compact .status-header {
+  margin-bottom: 8px;
+}
+
+.landing-template main .ue-trial .status-container.compact .status-sub {
+  margin: 0 0 28px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #4b4b4b;
+}
+
+/* a short timeline, as in AEM Coder's report: done steps keep their check, the running one spins,
+   the rest wait in grey, and a line joins them */
+.landing-template main .ue-trial .status-container.compact .steps-container {
+  gap: 0;
+}
+
+.landing-template main .ue-trial .status-container.compact .step-item {
+  position: relative;
+  gap: 14px;
+  padding: 0 0 20px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.landing-template main .ue-trial .status-container.compact .step-item:last-child {
+  padding-bottom: 0;
+}
+
+.landing-template main .ue-trial .status-container.compact .step-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 25px;
+  bottom: 3px;
+  left: 10px;
+  width: 2px;
+  border-radius: 1px;
+  background: #e1e1e1;
+  transition: background-color 300ms var(--landing-ease);
+}
+
+.landing-template main .ue-trial .status-container.compact .step-item.completed:not(:last-child)::before {
+  background: oklch(62% 0.17 150deg);
+}
+
+.landing-template main .ue-trial .status-container.compact :is(.spinner, .checkmark, .error) {
+  width: 22px;
+  height: 22px;
+}
+
+.landing-template main .ue-trial .status-container.compact .spinner {
+  border: 2px solid #d5d5d5;
+  animation: none;
+}
+
+.landing-template main .ue-trial .status-container.compact :is(.step-item:first-child, .step-item.completed + .step-item):not(.completed) .spinner {
+  border-top-color: var(--landing-blue);
+  animation: spin 1s linear infinite;
+}
+
+.landing-template main .ue-trial .status-container.compact .checkmark {
+  background: oklch(62% 0.17 150deg);
+  animation: landing-check 320ms var(--landing-ease) both;
+}
+
+.landing-template main .ue-trial .status-container.compact .step-label {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 22px;
+  color: #6e6e6e;
+  transition: color 300ms var(--landing-ease);
+}
+
+.landing-template main .ue-trial .status-container.compact :is(.step-item:first-child, .step-item.completed + .step-item):not(.completed) .step-label {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.landing-template main .ue-trial .status-container.compact .step-item.completed .step-label {
+  color: #1a1a1a;
+}
+
+@keyframes landing-check {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* the steps' marks: a visible track for the spinner, and a drawn check centered in its circle */
+.landing-template main .ue-trial .spinner {
+  box-sizing: border-box;
+  border-color: #d5d5d5;
+  border-top-color: var(--landing-blue);
+}
+
+.landing-template main .ue-trial .checkmark {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  font-size: 0;
 }
 
 /* ---------- hero: the pitch and the audiences beside the sign-up card, no product screens ---------- */
@@ -1937,7 +2124,8 @@ body.landing-template {
     transition: none;
   }
 
-  .landing-template main .ue-trial .altcha-container .altcha-error {
+  .landing-template main .ue-trial .altcha-container .altcha-error,
+  .landing-template main .ue-trial .status-container.compact .checkmark {
     animation: none;
   }
 }

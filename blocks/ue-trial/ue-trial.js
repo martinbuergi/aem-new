@@ -73,19 +73,77 @@ function generatePlaceholderSVG(text, index, options = {}) {
 // Define the steps for the trial setup process
 /**
  * "Migrate your own site" path: authors enable it by adding a template row whose value is
- * `own-site`. Selecting it shows a website field in the form; Continue sends one registration
- * request:
- *   { email, altcha, scope, template: 'own-site', siteUrl, sampleTemplate? }
- * With `sampleTemplate`, the response's processId is expected to track that sample site, so
- * the usual setup progress is shown while the migration runs in the background.
- * The backend does not accept this yet, so submitting is switched off: flip OWN_SITE_ENABLED
- * once it does. Add `?migrate-demo` to the page URL to walk through the flow with simulated
- * responses (nothing is sent).
+ * `own-site`. Selecting it shows a website field in the form. Continue opens AEM Coder's launch
+ * link in a new tab, where the visitor signs in and the migration of the whole website starts.
+ * The link sends nothing back; AEM Coder emails whoever signs in once the run is ready.
+ * With the "while you wait" switch on, the selected sample site is registered as usual and its
+ * setup progress is shown here. Add `?migrate-demo` to the page URL to simulate that sample setup
+ * (nothing is registered; the launch link still opens).
  */
 const OWN_SITE_VALUE = 'own-site';
-const OWN_SITE_ENABLED = false;
 const MIGRATE_DEMO = new URLSearchParams(window.location.search).has('migrate-demo');
-const OWN_SITE_ACCEPTED = OWN_SITE_ENABLED || MIGRATE_DEMO;
+
+/**
+ * AEM Coder's launch link. Opened again for the same website, it shows the run that is already
+ * going instead of starting another, so "Open it again" is safe.
+ */
+const AUTO_MIGRATE_URL = 'https://aemcoder.adobe.io/auto/migrate';
+// one named tab: opening the link again brings back the same tab rather than stacking new ones
+const AUTO_MIGRATE_TAB = 'aem-auto-migrate';
+
+/**
+ * @param {string} siteUrl - a normalized http(s) URL
+ * @returns {string} the launch link that migrates it, counted as coming from aem.new
+ */
+function migrateLink(siteUrl) {
+  const link = new URL(AUTO_MIGRATE_URL);
+  link.searchParams.set('url', siteUrl);
+  link.searchParams.set('from', 'aem-new');
+  return link.href;
+}
+
+/**
+ * Opens the launch link in its tab. Call it straight from the click, so popup blockers allow it.
+ * @param {string} link
+ * @returns {boolean} whether the tab opened
+ */
+function openMigration(link) {
+  // the opener stays (a first-party Adobe tab): cutting it stops "Open it again" reusing the tab
+  return Boolean(window.open(link, AUTO_MIGRATE_TAB));
+}
+
+/**
+ * What happens in the migration tab, and a way back to it.
+ * @param {string} host - the website being migrated
+ * @param {string} link - its launch link
+ * @param {boolean} opened - whether the tab opened; if not, the link leads
+ * @returns {HTMLElement[]}
+ */
+function migrationNote(host, link, opened) {
+  const reopen = createTag('a', { href: link, target: AUTO_MIGRATE_TAB, class: 'migration-link' });
+  // visitor input: set as text, never as HTML
+  const body = createTag('p');
+  if (!opened) {
+    reopen.textContent = 'Open AEM';
+    reopen.classList.add('button');
+    body.textContent = `Sign in to start migrating ${host}.`;
+    return [body, createTag('p', {}, reopen)];
+  }
+  reopen.textContent = 'Open it again';
+  // an open tab is only brought forward: reloading its launch link could start a second run
+  reopen.addEventListener('click', (e) => {
+    const tab = window.open('', AUTO_MIGRATE_TAB);
+    if (!tab) return;
+    e.preventDefault();
+    try {
+      if (tab.location.href === 'about:blank') tab.location.href = link;
+    } catch {
+      tab.focus();
+    }
+  });
+  body.append(`Sign in on the new tab to start migrating ${host}. Lost the tab? `, reopen);
+  return [body];
+}
 
 /** How long each start path takes, shown under the "Start with" switch */
 const START_HINTS = {
@@ -144,10 +202,7 @@ function buildSiteField() {
   // the "how long" hint shares the label's row, which keeps Continue in the first screen
   const hint = createTag('p', { class: 'start-hint slow', id: 'site-url-hint' }, START_HINTS[OWN_SITE_VALUE]);
   field.append(createTag('label', { for: 'site-url' }, 'Your website'), hint, input);
-  input.addEventListener('input', () => {
-    validateSiteUrl(input);
-    input.closest('form')?.querySelector('.own-site-note')?.remove();
-  });
+  input.addEventListener('input', () => validateSiteUrl(input));
   return { field, input };
 }
 
@@ -211,7 +266,6 @@ function buildOwnSitePath(ownSite, templateGrid) {
     if (img) waitThumb.src = img.currentSrc || img.src;
     const sampleName = card?.querySelector('h4')?.textContent;
     waitTitle.textContent = `Also explore the ${sampleName ? `${sampleName} ` : ''}sample site while yours migrates`;
-    switcher.closest('form')?.querySelector('.own-site-note')?.remove();
   };
   switcher.addEventListener('change', update);
   waitToggle.addEventListener('change', update);
@@ -221,30 +275,60 @@ function buildOwnSitePath(ownSite, templateGrid) {
 }
 
 /**
- * Own-site submissions are not supported by the backend yet: say so next to Continue.
- * @param {HTMLFormElement} form
+ * The heading and note both own-site cards open with, so the two paths read alike.
+ * @param {string} host
+ * @param {string} link
+ * @param {boolean} opened
+ * @returns {HTMLElement[]}
  */
-function showOwnSiteComingSoon(form) {
-  if (form.querySelector('.own-site-note')) return;
-  const note = createTag('p', { class: 'own-site-note', role: 'status' }, 'Migrating your own site is coming soon, so nothing has been sent. Choose "Explore a sample site" to get your workspace today.');
-  form.querySelector('.button-container')?.before(note);
+function migrationLead(host, link, opened) {
+  const note = migrationNote(host, link, opened);
+  // the heading already names the new tab
+  if (opened) note[0].firstChild.textContent = `Sign in there to start migrating ${host}. Lost the tab? `;
+  return [createTag('h3', {}, opened ? 'Continue in the new tab' : 'One more step'), ...note];
 }
 
 /**
- * Building from a customer site takes a while, so confirm and promise an email
- * instead of polling the setup steps.
+ * Migrating only: the run continues in AEM Coder's tab, so this page points there.
  * @param {HTMLFormElement} form
- * @param {string} email
  * @param {string} host - the site being migrated
+ * @param {string} link - its launch link
+ * @param {boolean} opened - whether the tab opened
  */
-function showOwnSiteConfirmation(form, email, host) {
+function showOwnSiteConfirmation(form, host, link, opened) {
   const message = createTag('div', { class: 'success-message own-site-confirmation', role: 'status' });
-  // visitor input: set as text, never as HTML
-  const body = createTag('p');
-  body.textContent = `We're creating your Experience Workspace from ${host}. This can take a while, so there's no need to wait here: we'll email you at ${email} when it's ready.`;
-  message.append(createTag('h3', {}, 'We\'re building your workspace'), body);
+  message.append(...migrationLead(host, link, opened));
   form.replaceChildren(message);
 }
+
+const STEP_STAGGER_MS = 600;
+// a beat after the last check before the card says it's ready
+const FINISH_PAUSE_MS = 700;
+
+/**
+ * Changes a line's text with a short rise-in, so step changes read as progress, not a flicker.
+ * @param {HTMLElement} el
+ * @param {string} text
+ */
+function riseText(el, text) {
+  if (!el || el.textContent === text) return;
+  const first = !el.textContent;
+  el.textContent = text;
+  if (first || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  el.animate([
+    { opacity: 0, transform: 'translateY(6px)' },
+    { opacity: 1, transform: 'none' },
+  ], { duration: 280, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' });
+}
+
+// aem.new's timeline speaks plainly, the way AEM Coder's migration report does
+const COMPACT_LABELS = {
+  createUser: 'Creating your account',
+  codeBus: 'Setting up your site',
+  quicksite: 'Copying the sample content',
+  publishContent: 'Publishing your pages',
+  sendNotification: 'Emailing your access details',
+};
 
 const TRIAL_STEPS = [
   { key: 'createUser', label: 'Creating user account' },
@@ -435,28 +519,57 @@ function showModal(message, title = 'Error') {
   okButton.focus();
 }
 
-function showSuccessMessage(element) {
-  const successMessage = createTag('div', { class: 'success-message' });
-  const completionText = createTag('p', {}, 'Your environment is ready! You will receive an email with access details shortly.');
-  successMessage.appendChild(completionText);
-  element.replaceWith(successMessage);
+/**
+ * The setup card turns into its own result: the heading says it's ready and the checked steps
+ * stay, so the card keeps its exact size rather than collapsing into a smaller message.
+ * @param {HTMLElement} card - the status container
+ */
+function showSuccessMessage(card) {
+  const compact = card.classList.contains('compact');
+  // let the steps still checking off one by one finish, then pause, before saying it's ready
+  if (compact && !card.dataset.settling) {
+    card.dataset.settling = 'true';
+    const pending = Math.max(0, Number(card.dataset.nextAt || 0) - Date.now());
+    setTimeout(() => showSuccessMessage(card), pending + FINISH_PAUSE_MS);
+    return;
+  }
+  card.classList.add('finished');
+  const title = card.querySelector('.status-header h2');
+  const { sampleName } = card.closest('form')?.dataset || {};
+  const sample = sampleName ? `The ${sampleName} sample site` : 'Your sample site';
+  const done = compact ? `${sample} is ready` : 'Your environment is ready';
+  if (compact) riseText(title, done);
+  else if (title) title.textContent = done;
+  title?.setAttribute('role', 'status');
+  if (compact) return;
+  const mail = card.querySelector('[data-step="sendNotification"] .step-label');
+  if (mail) mail.textContent = 'Email sent with your access details';
 }
 
 function createStatusInline(form) {
   const statusContainer = createTag('div', { class: 'status-container' });
-  const { migratingHost, migratingEmail } = form.dataset;
+  const {
+    migratingHost, migrateLink: link, migrateOpened, sampleName, email,
+  } = form.dataset;
   const steps = trialSteps(form);
   form.innerHTML = '';
-  if (migratingHost) {
-    // migrate path with a sample site: the migration keeps running in the background
-    const banner = createTag('p', { class: 'migration-banner', role: 'status' });
-    banner.textContent = `We're migrating ${migratingHost} in the background and will email you at ${migratingEmail} when it's ready. Meanwhile, your sample site:`;
-    form.append(banner);
-  }
   form.appendChild(statusContainer);
+  // aem.new shows the setup as a short timeline in plain words
+  const compact = Boolean(migratingHost) || document.body.classList.contains('landing-template');
+  if (compact) statusContainer.classList.add('compact');
+  if (migratingHost) {
+    // with the sample too: the migration leads, as on the own-site card; the sample follows small
+    // the sample's progress would read as the migration's, so it's only a note here
+    const banner = createTag('div', { class: 'migration-banner', role: 'status' });
+    const to = email || 'you';
+    const sampleNote = createTag('p', { class: 'sample-note' }, `We'll also email ${to} access to the ${sampleName ? `${sampleName} ` : ''}sample.`);
+    banner.append(...migrationLead(migratingHost, link, migrateOpened === 'true'), sampleNote);
+    statusContainer.append(banner);
+  }
 
   const header = createTag('div', { class: 'status-header' });
-  const title = createTag('h2', {}, 'Setting up your environment...');
+  const sample = sampleName ? `the ${sampleName} sample site` : 'your sample site';
+  const title = createTag('h2', {}, compact ? `Setting up ${sample}…` : 'Setting up your environment...');
   header.appendChild(title);
 
   const stepsContainer = createTag('div', { class: 'steps-container' });
@@ -469,7 +582,7 @@ function createStatusInline(form) {
     });
 
     const spinner = createTag('div', { class: 'spinner' });
-    const stepLabel = createTag('span', { class: 'step-label' }, step.label);
+    const stepLabel = createTag('span', { class: 'step-label' }, (compact && COMPACT_LABELS[step.key]) || step.label);
 
     stepElement.appendChild(spinner);
     stepElement.appendChild(stepLabel);
@@ -489,6 +602,10 @@ function createStatusInline(form) {
   errorContainer.appendChild(retryButton);
 
   statusContainer.appendChild(header);
+  if (compact && !migratingHost) {
+    const sub = email ? `We'll email your access details to ${email}.` : "We'll email you your access details.";
+    statusContainer.appendChild(createTag('p', { class: 'status-sub' }, sub));
+  }
   statusContainer.appendChild(stepsContainer);
   statusContainer.appendChild(errorContainer);
 
@@ -515,9 +632,21 @@ function updateStatusInline(form, status) {
     if (!spinner) return;
 
     if (stepData && stepData.result === 'success') {
-      spinner.innerHTML = '✓';
-      spinner.className = 'checkmark';
-      stepElement.classList.add('completed');
+      const markDone = () => {
+        // a drawn check: the ✓ glyph sits off-center in the brand font
+        spinner.innerHTML = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 6.2 5 8.6l4.5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        spinner.className = 'checkmark';
+        stepElement.classList.add('completed');
+      };
+      if (!statusContainer.classList.contains('compact') || stepElement.classList.contains('completed')) {
+        markDone();
+      } else if (!stepElement.dataset.queued) {
+        // one status answer can report several finished steps: they check off one by one
+        stepElement.dataset.queued = 'true';
+        const at = Math.max(Date.now(), Number(statusContainer.dataset.nextAt || 0));
+        statusContainer.dataset.nextAt = String(at + STEP_STAGGER_MS);
+        setTimeout(markDone, at - Date.now());
+      }
     } else if (stepData && stepData.result === 'error') {
       spinner.innerHTML = '✗';
       spinner.className = 'error';
@@ -682,6 +811,8 @@ function simulateStatus(form) {
   const status = { status: { finished: false } };
   updateStatusInline(form, status);
   const steps = trialSteps(form);
+  // like the real backend: one slow step, and two steps reported by the same status answer
+  const doneAt = [1600, 7200, 7200, 9200, 10800];
   steps.forEach((step, index) => {
     setTimeout(() => {
       status[step.key] = { result: 'success' };
@@ -689,7 +820,7 @@ function simulateStatus(form) {
       if (index === steps.length - 1) {
         showSuccessMessage(form.querySelector('.status-container'));
       }
-    }, 700 * (index + 1));
+    }, doneAt[index] ?? 1600 * (index + 1));
   });
 }
 
@@ -697,26 +828,17 @@ function simulateStatus(form) {
 async function submitFormData(form) {
   const data = processFormData(form);
   const ownSite = data.start === OWN_SITE_VALUE;
-  let host = '';
-  if (ownSite) {
-    // the sample site is an optional extra while the migration runs
-    if (form.querySelector('#sample-too')?.checked) data.sampleTemplate = data.template;
-    data.template = OWN_SITE_VALUE;
-    host = new URL(data.siteUrl).hostname;
-  } else {
-    delete data.siteUrl;
-  }
+  // the migration itself runs in AEM Coder's tab; this page only registers the sample site
+  delete data.siteUrl;
   delete data.start;
 
+  if (ownSite && !form.querySelector('#sample-too')?.checked) {
+    const { migratingHost, migrateLink: link, migrateOpened } = form.dataset;
+    showOwnSiteConfirmation(form, migratingHost, link, migrateOpened === 'true');
+    return;
+  }
+
   const onAccepted = (processId) => {
-    if (ownSite && !data.sampleTemplate) {
-      showOwnSiteConfirmation(form, data.email, host);
-      return;
-    }
-    if (ownSite) {
-      form.dataset.migratingHost = host;
-      form.dataset.migratingEmail = data.email;
-    }
     if (MIGRATE_DEMO) simulateStatus(form);
     else checkStatus(form, processId);
   };
@@ -1022,6 +1144,27 @@ async function buildForm(block) {
     buttonContainer,
   );
 
+  // Continue looks inactive until the form is complete, but stays clickable: a click lets the
+  // browser point at the first missing field instead of doing nothing
+  let robotState;
+  const syncContinue = () => {
+    const robotPending = robotState && robotState !== 'verified';
+    const githubInvalid = form.querySelector('#github-field.invalid');
+    // validity.valid, not checkValidity(): its "invalid" events make altcha alert() while verifying
+    const fieldsValid = [...form.elements].every((el) => !el.willValidate || el.validity.valid);
+    const ready = fieldsValid && !robotPending && !githubInvalid;
+    submitButton.setAttribute('aria-disabled', String(!ready));
+  };
+  altchaWidget.addEventListener('statechange', (e) => {
+    robotState = e.detail?.state;
+    syncContinue();
+    // altcha updates its checkbox's validity only after announcing the new state
+    requestAnimationFrame(syncContinue);
+  });
+  form.addEventListener('input', syncContinue);
+  form.addEventListener('change', syncContinue);
+  syncContinue();
+
   // Add form submission handler
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1036,6 +1179,10 @@ async function buildForm(block) {
       return;
     }
 
+    const sampleName = form.querySelector('.template-card.selected h4, .template-card h4')?.textContent;
+    if (sampleName) form.dataset.sampleName = sampleName;
+    form.dataset.email = form.querySelector('#business-email')?.value.trim() || '';
+
     // Migrate your own site: the website field has to hold a usable address
     const migrating = form.querySelector('input[name="start"]:checked')?.value === OWN_SITE_VALUE;
     if (migrating) {
@@ -1047,15 +1194,17 @@ async function buildForm(block) {
         return;
       }
       urlInput.value = siteUrl;
-      if (!OWN_SITE_ACCEPTED) {
-        showOwnSiteComingSoon(form);
-        return;
-      }
+      const link = migrateLink(siteUrl);
+      form.dataset.migratingHost = new URL(siteUrl).hostname.replace(/^www\./, '');
+      form.dataset.migrateLink = link;
+      // opened right here, in the click, so popup blockers let the tab through
+      form.dataset.migrateOpened = String(openMigration(link));
     }
 
     // Disable submit button to prevent multiple submissions
     const submitButtonSubmit = form.querySelector('button.continue');
     submitButtonSubmit.disabled = true;
+    submitButtonSubmit.removeAttribute('aria-disabled');
     submitButtonSubmit.textContent = 'Submitting...';
 
     // Submit form data
